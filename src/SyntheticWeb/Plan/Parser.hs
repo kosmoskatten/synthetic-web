@@ -11,8 +11,9 @@ import SyntheticWeb.Plan.Types ( Plan
                                , Activity (..)
                                , Duration (..)
                                , Pattern (..)
+                               , Payload (..)
                                , Size (..)
-                               , Flag (..)
+                               , Header (..)
                                )
 
 parsePlan :: Parser Plan
@@ -41,19 +42,16 @@ parseName = do
   BS.unpack <$> takeWhile1 (`elem` charSet)
 
 parseActivity :: Parser Activity
-parseActivity   = parseSleep <|> parseGet <|> parsePut <|> parseChatty
+parseActivity   = parseSleep <|> parseGet <|> parsePut
   where
     parseSleep  =
       SLEEP <$> ((skipSpace >> string "SLEEP") *> parseDuration)
     parseGet    = do
       skipSpace ; string "GET"
-      GET <$> parseList parseFlag <*> parseSize <*> parseRate
+      GET <$> parseHeaders <*> parsePayload <*> parseRate
     parsePut    = do
       skipSpace ; string "PUT"
-      PUT <$> parseList parseFlag <*> parseSize <*> parseRate
-    parseChatty = do
-      skipSpace ; string "Chatty"
-      Chatty <$> parseList parseFlag <*> parseSize <*> parseSize <*> parseRate
+      PUT <$> parseHeaders <*> parsePayload <*> parseRate
 
 parseDuration :: Parser Duration
 parseDuration = do
@@ -65,18 +63,29 @@ parseDuration = do
                 <|> (string "ms" *> return Ms)
                 <|> (string "s" *> return S)
 
+parseHeaders :: Parser [Header]
+parseHeaders = do
+  skipSpace ; string "headers"
+  skipSpace *> parseList parseHeader
+
 parseRate :: Parser Rate
-parseRate = parseUnlimited <|> parseLimited
+parseRate = do
+  skipSpace ; string "rate"
+  parseUnlimited <|> parseLimited
   where
     parseUnlimited = do
-      skipSpace
-      string "unlimited"
+      skipSpace ; string "unlimited"
       return Unlimited
       
     parseLimited = do
       skipSpace
       string "limitedTo"
       LimitedTo <$> (skipSpace *> parseSize)
+
+parsePayload :: Parser Payload
+parsePayload = do
+  skipSpace ; string "payload"
+  Payload <$> parseSize
 
 parseSize :: Parser Size
 parseSize =
@@ -112,11 +121,11 @@ parseList parser = do
       theRest <- many' $ (skipSpace >> char ',' >> skipSpace) *> parser
       return (first:theRest)
 
-parseFlag :: Parser Flag
-parseFlag =
-  read . BS.unpack <$> flags
+parseHeader :: Parser Header
+parseHeader =
+  read . BS.unpack <$> headers
   where
-    flags =
+    headers =
       string "AcceptAny"
       <|> string "AcceptTextHtml"
       <|> string "AcceptTextPlain"

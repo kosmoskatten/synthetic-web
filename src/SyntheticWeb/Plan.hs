@@ -8,8 +8,9 @@ module SyntheticWeb.Plan
        , Activity (..)
        , Duration (..)
        , Rate (..)
+       , Payload (..)
        , Size (..)
-       , Flag (..)
+       , Header (..)
        , parsePlan
        , writePlan
        , expand

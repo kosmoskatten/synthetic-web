@@ -12,22 +12,24 @@ writePattern :: (Weight, Pattern) -> [String]
 writePattern (Weight w, Pattern {..}) =
   [ printf "pattern %s with weight %d" name w
   ,        "[" ]                           ++
-  commify (map writeActivity activities)   ++
+  commify (map (unlines . writeActivity) activities)   ++
   [        "]" ]
 
 commify :: [String] -> [String]
 commify []     = []
 commify (x:xs) = x:map (\y -> ',':y) xs
 
-writeActivity :: Activity -> String
-writeActivity (SLEEP duration) = printf " SLEEP %s" (writeDuration duration)
-writeActivity (GET flags size rate)  =
-  printf " GET %s %s %s" (writeFlags flags) (writeSize size) (writeRate rate)
-writeActivity (PUT flags size rate)  =
-  printf " PUT %s %s %s" (writeFlags flags) (writeSize size) (writeRate rate)
-writeActivity (Chatty flags size size' rate) =
-  printf "Chatty %s %s %s %s" (writeFlags flags) (writeSize size)
-                              (writeSize size') (writeRate rate)
+writeActivity :: Activity -> [String]
+writeActivity (SLEEP duration) = 
+  [ printf " SLEEP %s" (writeDuration duration) ]
+writeActivity (GET headers size rate) =
+  [ printf " GET headers %s" (writeHeaders headers)
+  , printf "     payload %s" (writePayload size)
+  , printf "     rate %s" (writeRate rate) ]
+writeActivity (PUT headers size rate) =
+  [ printf " PUT headers %s" (writeHeaders headers)
+  , printf "     payload %s" (writePayload size)
+  , printf "     rate %s" (writeRate rate) ]
 
 writeDuration :: Duration -> String
 writeDuration (Us duration) = printf "%d us" duration
@@ -39,9 +41,12 @@ writeSize (Exactly bytes) = printf "exactly %d" bytes
 writeSize (Uniform range) = printf "uniform %d-%d" `uncurry` range
 writeSize (Gauss range)   = printf "gauss %d-%d" `uncurry` range
 
+writePayload :: Payload -> String
+writePayload (Payload size) = writeSize size
+
 writeRate :: Rate -> String
 writeRate Unlimited        = "unlimited"
 writeRate (LimitedTo size) = printf "limitedTo %s" (writeSize size)
 
-writeFlags :: [Flag] -> String
-writeFlags = show
+writeHeaders :: [Header] -> String
+writeHeaders = show

@@ -6,8 +6,9 @@ module SyntheticWeb.Plan.Types
        , Activity (..)
        , Duration (..)
        , Rate (..)
+       , Payload (..)
        , Size (..)
-       , Flag (..)
+       , Header (..)
        ) where
 
 -- | Tell the number of bytes.
@@ -33,14 +34,10 @@ data Pattern =
 data Activity =
   SLEEP Duration
     -- ^ Sleep during the specified duration.
-  | GET [Flag] Size Rate
+  | GET [Header] Payload Rate
     -- ^ Fetch a resource with the specified size.
-  | PUT [Flag] Size Rate
+  | PUT [Header] Payload Rate
     -- ^ Upload a resource with the specified size.
-  | Chatty [Flag] Size Size Rate
-    -- ^ Perform a chatty conversation. The first size specifies the
-    -- chunk size, and the second size specified the complete data
-    -- size for the conversation.
   deriving (Eq, Show)
 
 -- | Specification of a duration.
@@ -51,6 +48,10 @@ data Duration =
     -- ^ Duration in milliseconds.
   | S Int
     -- ^ Duration in seconds.
+  deriving (Eq, Show)
+
+-- | Specification of payload.
+data Payload = Payload Size
   deriving (Eq, Show)
 
 -- | Specification of rate limitation. 
@@ -73,9 +74,9 @@ data Size =
     -- ^ A numer of bytes normal distributed over the range.
   deriving (Eq, Show)
 
--- | Flags that specifies the behavior of the client/server
--- interaction schemes.
-data Flag =
+-- | Header flags that specifies the behavior of the communication
+-- between client and server.
+data Header =
   AcceptAny
     -- ^ The client accepts contents of any type in the response.
   | AcceptTextHtml

@@ -22,14 +22,15 @@ instance Arbitrary Pattern where
 instance Arbitrary Activity where
   arbitrary = oneof [ SLEEP  <$> arbitrary
                     , GET    <$> arbitrary <*> arbitrary <*> arbitrary
-                    , PUT    <$> arbitrary <*> arbitrary <*> arbitrary
-                    , Chatty <$> arbitrary <*> arbitrary <*>
-                                 arbitrary <*> arbitrary ]
+                    , PUT    <$> arbitrary <*> arbitrary <*> arbitrary ]
 
 instance Arbitrary Duration where
   arbitrary = oneof [ Us <$> choose (1, 1000)
                     , Ms <$> choose (1, 1000)
                     , S  <$> choose (1, 1000) ]
+
+instance Arbitrary Payload where
+  arbitrary = Payload <$> arbitrary
 
 instance Arbitrary Rate where
   arbitrary = oneof [ return Unlimited
@@ -46,7 +47,7 @@ instance Arbitrary Size where
 instance Arbitrary Weight where
   arbitrary = Weight <$> choose (1, 10)
 
-instance Arbitrary Flag where
+instance Arbitrary Header where
   arbitrary = elements [minBound..maxBound]
 
 bytes :: Gen Bytes
