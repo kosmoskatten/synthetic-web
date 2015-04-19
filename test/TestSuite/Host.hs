@@ -3,9 +3,8 @@ module TestSuite.Host
        ) where
 
 import Control.Applicative ((<$>), (<*>))
-import Data.Maybe (fromJust)
 import Test.QuickCheck
-import SyntheticWeb.Host (Host (..), fromString)
+import SyntheticWeb.Host (Host (..))
 
 instance Arbitrary Host where
   arbitrary = Host <$> hostname' <*> port'
@@ -21,4 +20,4 @@ port' = choose (1, maxBound)
 encodeDecodeIsEqual :: Host -> Bool
 encodeDecodeIsEqual host = host == encodeDecode host
   where
-    encodeDecode = fromJust . fromString . show
+    encodeDecode = read . show

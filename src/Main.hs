@@ -1,41 +1,74 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE RecordWildCards #-}
 module Main where
 
+import Control.Concurrent.Async
+import Control.Monad (void, when)
+import Control.Monad.Writer (execWriter, tell)
+import Control.Monad.State (execState, modify)
+import Data.Maybe (isNothing, isJust, fromJust)
+import SyntheticWeb.Host (Host (..))
+import qualified SyntheticWeb.Client as Client
+import qualified SyntheticWeb.Observer as Observer
+import qualified SyntheticWeb.Server as Server
 import System.Console.CmdArgs
+import Text.Printf (printf)
 
 data SyntheticWeb =
-  CmdLine { client :: Maybe String
-          , model  :: Maybe FilePath
-          , obs    :: Maybe Int            
-          , server :: Maybe Int }
+  CmdLine { client   :: Maybe String
+          , model    :: Maybe FilePath
+          , observer :: Maybe Int 
+          , server   :: Maybe Int }
   deriving (Show, Data, Typeable)
 
+main :: IO ()
+main = do
+  services <- mkServices =<< commandLine
+  void $ waitAnyCancel =<< mapM async services
+
 defHost :: String
-defHost = "localhost:38900"
+defHost = printf "localhost:%d" defHostPort
 
 defHostPort :: Int
-defHostPort = 38900
+defHostPort = 22000
 
 defObsPort :: Int
-defObsPort = 38901
-
-main :: IO ()
-main = print =<< commandLine
+defObsPort = 22001
 
 commandLine :: IO SyntheticWeb
 commandLine = cmdArgs
-  CmdLine { client = def &= typ "<HOST>"                                 &=
-                     opt defHost &= groupname "Client configuration"     &=
-                     help "Run in client mode (default port 38900)"
+  CmdLine { client   = def &= typ "<HOST:PORT>"                            &=
+                       opt defHost &= groupname "Client configuration"     &=
+                       help helpStrClient
                      
-          , model  = def &= typ "<MODEL FILE PATH>"                      &=
-                     help "Model file (client only)"
+          , model    = def &= typ "<MODEL FILE PATH>"                      &=
+                       help "Model file path"
 
-          , obs    = def &= typ "<OBSERVABILITY PORT>"                   &=
-                     opt defObsPort                                      &=
-                     help "Observability port (default 38901)"
+          , observer = def &= typ "<OBSERVABILITY PORT>"                   &=
+                       opt defObsPort                                      &=
+                       help helpStrObs
                      
-          , server = def &= typ "<LISTENING PORT>"                       &=
-                     opt defHostPort &= groupname "Server configuration" &=
-                     help "Run in server mode (default port 38900)"
+          , server   = def &= typ "<LISTENING PORT>"                       &=
+                       opt defHostPort &= groupname "Server configuration" &=
+                       help helpStrServer
           }
+  where
+    helpStrClient = printf "Start client module (default connecting to %s)"
+                           defHost
+    helpStrObs    = printf "Start obs module (default at %d)" defObsPort
+    helpStrServer = printf "Start server module (default port %d)" defHostPort
+
+mkServices :: SyntheticWeb -> IO [IO ()]
+mkServices cmdLine@CmdLine {..}
+  | isJust client && isNothing model =
+    error "A model file path must be given. See --help option"
+  | isNothing client && isNothing server =
+    error "At least one of client or server must be started. See --help option"
+  | otherwise = return $ prepareServices cmdLine
+
+prepareServices :: SyntheticWeb -> [IO ()]
+prepareServices CmdLine {..} =
+  flip execState [] $ do
+    when (isJust client) $ modify ((:) Client.service)
+    when (isJust observer) $ modify ((:) Observer.service)
+    when (isJust server) $ modify ((:) (Server.service $ fromJust server))

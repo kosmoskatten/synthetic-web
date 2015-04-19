@@ -1,48 +1,53 @@
 {-# LANGUAGE RecordWildCards #-}
 module SyntheticWeb.Host
        ( Host (..)
-       , fromString
        ) where
 
 import Control.Applicative ((<$>), (<*>))
-import Data.Attoparsec.ByteString.Char8
-import qualified Data.Attoparsec.ByteString.Char8 as AP
-import qualified Data.ByteString.Char8 as BS
+import Text.ParserCombinators.ReadP ( ReadP
+                                    , char
+                                    , skipSpaces
+                                    , satisfy
+                                    , many
+                                    , pfail )
+import Text.ParserCombinators.ReadPrec (lift)
 import Text.Printf (printf)
+import GHC.Read (readPrec)
 
 data Host =
-  Host { hostname :: !String
-       , port     :: !Int }
+  Host { hostname :: String
+       , port     :: Int }
   deriving Eq
+
+instance Read Host where
+  readPrec = lift getHost
 
 instance Show Host where
   show Host {..} = printf "%s:%d" hostname port
 
-fromString :: String -> Maybe Host
-fromString str =
-  case expand $ parse parser (BS.pack str) of
-    Done _ host -> Just host
-    _           -> Nothing
-  where
-    expand :: Result Host -> Result Host
-    expand (Partial cont) = expand $ cont BS.empty
-    expand result         = result
+getHost :: ReadP Host
+getHost = do
+  hostname' <- getHostname
+  skipSpaces ; char ':'
+  port'     <- getPort
+  return Host { hostname = hostname', port = port' }
 
-parser :: Parser Host
-parser = do
-  skipSpace ; hostname' <- BS.unpack <$> parseHostname
-  skipSpace ; char ':'
-  skipSpace ; port'     <- decimal
-  skipSpace ; endOfInput
-  return Host { hostname = hostname'
-              , port     = port' }
+getHostname :: ReadP String
+getHostname = do
+  let initSet = ['a'..'z'] ++ ['A'..'Z']
+      contSet = initSet ++ ['0'..'9'] ++ "-_."
+  skipSpaces
+  (:) <$> satisfy (`elem` initSet) <*> many (satisfy (`elem` contSet))
 
-parseHostname :: Parser BS.ByteString
-parseHostname = do
-  let initCharSet = ['a'..'z'] ++ ['A'..'Z']
-      contCharSet = initCharSet ++ ['0'..'9'] ++ ['-', '.']
-  BS.cons <$> satisfy (`elem` initCharSet)
-          <*> AP.takeWhile (`elem` contCharSet)
+getPort :: ReadP Int
+getPort = do
+  let initSet = ['1'..'9']
+      contSet = '0':initSet
+  skipSpaces
+  numStr <- (:) <$> satisfy (`elem` initSet) <*> many (satisfy (`elem` contSet))
+  case reads numStr of
+    [(num, _)] -> return num
+    _          -> pfail
 
 
 
