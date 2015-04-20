@@ -1,9 +1,9 @@
 -- | The Plan provides a notation to describe the simulated network
 -- traffic in terms of Patterns and Activities.
 module SyntheticWeb.Plan       
-       ( Bytes
+       ( Plan (..)
+       , Bytes
        , Weight (..)
-       , Plan
        , Pattern (..)
        , Activity (..)
        , Duration (..)
@@ -24,4 +24,5 @@ import SyntheticWeb.Plan.Writer
 -- | Expand the plan such that each pattern is multiplied with its
 -- weight.
 expand :: Plan -> Vector Pattern
-expand = fromList . concatMap (\(Weight w, s) -> replicate w s)
+expand (Plan plan) = go plan
+    where go = fromList . concatMap (\(Weight w, s) -> replicate w s)

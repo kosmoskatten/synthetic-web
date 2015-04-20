@@ -6,7 +6,8 @@ import Text.Printf (printf)
 import SyntheticWeb.Plan.Types
 
 writePlan :: Plan -> BS.ByteString
-writePlan = BS.pack . unlines . concatMap writePattern
+writePlan (Plan plan) = go plan
+    where go = BS.pack . unlines . concatMap writePattern
 
 writePattern :: (Weight, Pattern) -> [String]
 writePattern (Weight w, Pattern {..}) =

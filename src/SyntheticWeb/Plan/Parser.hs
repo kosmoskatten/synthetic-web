@@ -4,7 +4,7 @@ module SyntheticWeb.Plan.Parser (parsePlan) where
 import Control.Applicative ((<$>), (<*>), (*>), (<|>))
 import Data.Attoparsec.ByteString.Char8
 import qualified Data.ByteString.Char8 as BS
-import SyntheticWeb.Plan.Types ( Plan
+import SyntheticWeb.Plan.Types ( Plan (..)
                                , Bytes
                                , Weight (..)
                                , Rate (..)
@@ -20,7 +20,7 @@ parsePlan :: Parser Plan
 parsePlan = do
   plan <- many' parsePattern
   skipSpace ; endOfInput
-  return plan
+  return $ Plan plan
 
 parsePattern :: Parser (Weight, Pattern)
 parsePattern = do

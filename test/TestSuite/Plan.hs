@@ -13,6 +13,9 @@ import qualified Data.Vector as Vector
 import Test.QuickCheck
 import SyntheticWeb.Plan
 
+instance Arbitrary Plan where
+  arbitrary = Plan <$> (resize 20 $ listOf weightPatternPair)
+
 instance Arbitrary Pattern where
   arbitrary = Pattern <$> patternName <*> (resize 20 $ listOf1 spec)
     where
@@ -50,6 +53,9 @@ instance Arbitrary Weight where
 instance Arbitrary Header where
   arbitrary = elements [minBound..maxBound]
 
+weightPatternPair :: Gen (Weight, Pattern)
+weightPatternPair = (,) <$> arbitrary <*> arbitrary
+
 bytes :: Gen Bytes
 bytes = choose (500, 50000000)
 
@@ -77,4 +83,5 @@ extractResult (Done _ r)     = Just r
 extractResult _              = Nothing
 
 weightSum :: Plan -> Int
-weightSum = foldl' (\acc (Weight w, _) -> acc + w) 0
+weightSum (Plan plan) = go plan
+    where go = foldl' (\acc (Weight w, _) -> acc + w) 0
