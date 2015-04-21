@@ -59,6 +59,7 @@ test-suite syntheticweb-tests
                        , bytestring
                        , deepseq
                        , http-streams
+                       , io-streams
                        , random
                        , snap-core
                        , snap-server

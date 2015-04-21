@@ -22,5 +22,6 @@ testSuite =
   , testGroup "Server feature tests"
     [ testCase "Get text/plain size 667" Server.getTextPlainSize667
     , testCase "Get text/html size 5671" Server.getTextHtmlSize5671
+    , testCase "Put text/plain" Server.putTextPlain
     ]
   ]

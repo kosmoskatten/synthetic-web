@@ -37,6 +37,7 @@ service port = do
                 [ (":resource", method GET $ do
                      getReplyHandler
                      generatePayload payload )
+                , (":resource", method PUT $ putReplyHandler)
                 ] <|> resourceNotFoundHandler
 
 getReplyHandler :: Snap ()
@@ -45,6 +46,9 @@ getReplyHandler = do
   let contentType = 
           maybe emptyResponse (`setContentType` emptyResponse) accept
   putResponse $ setResponseCode 200 contentType
+
+putReplyHandler :: Snap ()
+putReplyHandler = putResponse $ setResponseCode 204 emptyResponse
 
 generatePayload :: LBS.ByteString -> Snap ()
 generatePayload payload = do
