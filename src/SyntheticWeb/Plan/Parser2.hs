@@ -15,7 +15,8 @@ import Text.Parsec
 
 parsePlan2 :: Parser Plan
 parsePlan2 = do
-  patterns <- manyTill parsePattern (try eof)
+  patterns <- many (try parsePattern)
+  spaces ; eof
   return $ Plan patterns
 
 parsePattern :: Parser (Weight, Pattern)
@@ -118,7 +119,8 @@ parseHeader = do
                ]
 
 listOf :: Parser a -> Parser [a]
-listOf p = between (spaces >> char '[') (char ']') $
-                   choice [ try $ (p <* spaces) `sepBy1` (char ',')
-                          , spaces *> return []
-                          ]
+listOf p = 
+    between (spaces >> char '[') (char ']') $
+            choice [ try $ (p <* spaces) `sepBy1` (char ',')
+                   , spaces *> return []
+                   ]

@@ -61,9 +61,10 @@ bytes :: Gen Bytes
 bytes = choose (500, 50000000)
 
 patternName :: Gen String
-patternName =
-  resize 20 $ listOf1 $
-    elements (['A'..'Z'])
+patternName = (:) <$> elements initSet <*> listOf (elements contSet)
+  where
+    initSet = ['A'..'Z']
+    contSet = initSet ++ ['a'..'z'] ++ ['0'..'9'] ++ "-_."
 
 -- | Check that the plan is expanded such that the expansion's length
 -- is equal to the sum of the weights.

@@ -84,4 +84,3 @@ readPlanFromFile filePath =
 
 readPlanFromFile2 :: FilePath -> IO (Either ParseError Plan)
 readPlanFromFile2 = parseFromFile parsePlan2
-
