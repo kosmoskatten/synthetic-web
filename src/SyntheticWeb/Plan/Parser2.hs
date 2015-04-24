@@ -1,5 +1,6 @@
 module SyntheticWeb.Plan.Parser2 (parsePlan2) where
 
+import Control.Monad (void)
 import SyntheticWeb.Plan.Types ( Plan (..)
                                , Weight (..)
                                , Rate (..)
@@ -21,6 +22,7 @@ parsePlan2 = do
 
 parsePattern :: Parser (Weight, Pattern)
 parsePattern = do
+  many (try comment)
   spaces ; string "pattern"
   name'       <- parseName
   weight'     <- parseWeight
@@ -39,7 +41,8 @@ parseName = do
   spaces ; (:) <$> oneOf initSet <*> many (oneOf contSet)
 
 parseActivity :: Parser Activity
-parseActivity =
+parseActivity = do
+  many (try comment)
   try parseGet <|> try parsePut <|> try parseSleep
   where
     parseGet = do
@@ -124,3 +127,8 @@ listOf p =
             choice [ try $ (p <* spaces) `sepBy1` (char ',')
                    , spaces *> return []
                    ]
+
+comment :: Parser ()
+comment = do
+  spaces ; char '#'
+  void $ manyTill anyChar (try endOfLine)
