@@ -15,6 +15,8 @@ import qualified SyntheticWeb.Server as Server
 import System.Console.CmdArgs
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
+import Text.Parsec (ParseError)
+import Text.Parsec.ByteString (parseFromFile)
 import Text.Printf (printf)
 
 data SyntheticWeb =
@@ -76,6 +78,5 @@ prepareServices CmdLine {..} =
     when (isJust observer) $ modify ((:) Observer.service)
     when (isJust server) $ modify ((:) (Server.service $ fromJust server))
 
-readPlanFromFile :: FilePath -> IO Plan
-readPlanFromFile filePath = 
-    Streams.withFileAsInput filePath $ Streams.parseFromStream parsePlan
+readPlanFromFile :: FilePath -> IO (Either ParseError Plan)
+readPlanFromFile = parseFromFile parsePlan

@@ -3,7 +3,6 @@ module SyntheticWeb.Host
        ( Host (..)
        ) where
 
-import Control.Applicative ((<$>), (<*>))
 import Text.ParserCombinators.ReadP ( ReadP
                                     , char
                                     , skipSpaces

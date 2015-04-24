@@ -1,11 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
 module SyntheticWeb.Plan.Parser (parsePlan) where
 
-import Control.Applicative ((<$>), (<*>), (*>), (<|>))
-import Data.Attoparsec.ByteString.Char8
-import qualified Data.ByteString.Char8 as BS
+import Control.Monad (void)
 import SyntheticWeb.Plan.Types ( Plan (..)
-                               , Bytes
                                , Weight (..)
                                , Rate (..)
                                , Activity (..)
@@ -15,121 +11,125 @@ import SyntheticWeb.Plan.Types ( Plan (..)
                                , Size (..)
                                , Header (..)
                                )
+import Text.Parsec.ByteString
+import Text.Parsec
 
 parsePlan :: Parser Plan
 parsePlan = do
-  plan <- many' parsePattern
-  skipSpace ; endOfInput
-  return $ Plan plan
+  patterns <- many (try parsePattern)
+  spaces ; eof
+  return $ Plan patterns
 
 parsePattern :: Parser (Weight, Pattern)
 parsePattern = do
-  skipSpace ; string "pattern"
-  patternName  <- parseName
-  weight       <- parseWeight
-  activities'  <- parseList parseActivity
-  return (weight, Pattern patternName activities')
+  many (try comment)
+  spaces ; string "pattern"
+  name'       <- parseName
+  weight'     <- parseWeight
+  many (try comment)
+  activities' <- listOf parseActivity
+  return (weight', Pattern name' activities')
 
 parseWeight :: Parser Weight
 parseWeight = do
-  skipSpace ; string "with" ; skipSpace ; string "weight" ; skipSpace
-  Weight <$> decimal
+  spaces ; string "with" ; spaces ; string "weight"
+  spaces ; Weight . read <$> many1 digit
 
 parseName :: Parser String
 parseName = do
-  skipSpace
-  let charSet = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ ['_', '-']
-  BS.unpack <$> takeWhile1 (`elem` charSet)
+  let initSet = ['a'..'z'] ++ ['A'..'Z']
+      contSet = initSet ++ ['0'..'9'] ++ "-_."
+  spaces ; (:) <$> oneOf initSet <*> many (oneOf contSet)
 
 parseActivity :: Parser Activity
-parseActivity   = parseSleep <|> parseGet <|> parsePut
+parseActivity = do
+  many (try comment)
+  try parseGet <|> try parsePut <|> try parseSleep
   where
-    parseSleep  =
-      SLEEP <$> ((skipSpace >> string "SLEEP") *> parseDuration)
-    parseGet    = do
-      skipSpace ; string "GET"
+    parseGet = do
+      spaces ; string "GET"
       GET <$> parseHeaders <*> parsePayload <*> parseRate
-    parsePut    = do
-      skipSpace ; string "PUT"
+    parsePut = do
+      spaces ; string "PUT"
       PUT <$> parseHeaders <*> parsePayload <*> parseRate
+    parseSleep = do
+      spaces ; string "SLEEP"
+      SLEEP <$> parseDuration
 
 parseDuration :: Parser Duration
 parseDuration = do
-  skipSpace ; duration <- decimal
-  skipSpace ; unit     <- parseUnit
+  spaces ; duration <- read <$> many1 digit
+  unit <- try parseUs <|> try parseMs <|> try parseS
   return $ unit duration
   where
-    parseUnit = (string "us" *> return Us)
-                <|> (string "ms" *> return Ms)
-                <|> (string "s" *> return S)
+    parseUs = do
+      spaces ; string "us" ; return Us
+    parseMs = do
+      spaces ; string "ms" ; return Ms
+    parseS  = do
+      spaces ; string "s" ; return S
 
 parseHeaders :: Parser [Header]
 parseHeaders = do
-  skipSpace ; string "headers"
-  skipSpace *> parseList parseHeader
+  spaces ; string "headers"
+  listOf parseHeader
 
 parseRate :: Parser Rate
 parseRate = do
-  skipSpace ; string "rate"
-  parseUnlimited <|> parseLimited
+  spaces ; string "rate"
+  try parseUnlimited <|> try parseLimitedTo
   where
     parseUnlimited = do
-      skipSpace ; string "unlimited"
-      return Unlimited
-      
-    parseLimited = do
-      skipSpace
-      string "limitedTo"
-      LimitedTo <$> (skipSpace *> parseSize)
+      spaces ; string "unlimited" ; return Unlimited
+    parseLimitedTo = do
+      spaces ; string "limitedTo"
+      LimitedTo <$> parseSize
 
 parsePayload :: Parser Payload
 parsePayload = do
-  skipSpace ; string "payload"
+  spaces ; string "payload"
   Payload <$> parseSize
 
 parseSize :: Parser Size
-parseSize =
-  parseExactly
-  <|> parseDistribution "uniform" Uniform
-  <|> parseDistribution "gauss" Gauss
+parseSize = try parseExactly
+            <|> try (parseDist "gauss" Gauss)
+            <|> try (parseDist "uniform" Uniform)
   where
+    parseExactly :: Parser Size
     parseExactly = do
-      skipSpace
-      string "exactly"
-      Exactly <$> (skipSpace *> decimal)
+      spaces ; string "exactly"
+      spaces ; Exactly . read <$> many1 digit
 
-    parseDistribution :: BS.ByteString -> ((Bytes, Bytes) -> Size)
-                         -> Parser Size
-    parseDistribution dist ctor = do
-      skipSpace
-      string dist
-      minValue <- skipSpace *> decimal
-      skipSpace ; char '-'
-      maxValue <- skipSpace *> decimal
-      return $ ctor (minValue, maxValue)
-
-parseList :: Parser a -> Parser [a]
-parseList parser = do
-  skipSpace ; char '['
-  items <- parseList' <|> return []
-  skipSpace ; char ']'
-  return items
-  where
-    parseList' = do
-      skipSpace
-      first <- parser
-      theRest <- many' $ (skipSpace >> char ',' >> skipSpace) *> parser
-      return (first:theRest)
+    parseDist :: String -> ((Int, Int) -> Size) -> Parser Size
+    parseDist dist ctor = do
+      spaces ; string dist
+      spaces ; minV <- read <$> many1 digit
+      spaces ; char '-'
+      spaces ; maxV <- read <$> many1 digit
+      return $ ctor (minV, maxV)
 
 parseHeader :: Parser Header
-parseHeader =
-  read . BS.unpack <$> headers
-  where
-    headers =
-      string "AcceptAny"
-      <|> string "AcceptTextHtml"
-      <|> string "AcceptTextPlain"
-      <|> string "AcceptApplicationJSON"
-      <|> string "ContentTextHtml"
-      <|> string "ContentTextPlain"
-      <|> string "ContentApplicationJSON"
+parseHeader = do
+  spaces ; read <$> headers
+    where
+      headers =
+        choice [ try $ string "AcceptAny"
+               , try $ string "AcceptTextHtml"
+               , try $ string "AcceptTextPlain"
+               , try $ string "AcceptApplicationJSON"
+               , try $ string "ContentTextHtml"
+               , try $ string "ContentTextPlain"
+               , try $ string "ContentApplicationJSON"
+               ]
+
+listOf :: Parser a -> Parser [a]
+listOf p = 
+    between (spaces >> char '[') (char ']') $
+            choice [ try $ (p <* spaces) `sepBy1` char ','
+                   , spaces *> return []
+                   ]
+
+comment :: Parser ()
+comment = do
+  spaces ; char '#'
+  void $ manyTill anyChar (try endOfLine)

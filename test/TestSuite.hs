@@ -15,6 +15,8 @@ testSuite =
   [ testGroup "Plan property tests"
     [ testProperty "VectorSizeIsSumOfWeights" Plan.vectorSizeIsSumOfWeights
     , testProperty "EncodeDecodeIsEqual" Plan.encodeDecodeIsEqual
+    , testProperty "EncodeDecodeIsEqualWhenComments"
+                   Plan.encodeDecodeIsEqualWhenComments
     ]
   , testGroup "Host property tests"
     [ testProperty "DecodeEncodeIsEqual" Host.encodeDecodeIsEqual

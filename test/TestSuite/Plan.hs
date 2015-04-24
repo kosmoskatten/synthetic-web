@@ -3,14 +3,15 @@
 module TestSuite.Plan
        ( vectorSizeIsSumOfWeights
        , encodeDecodeIsEqual
+       , encodeDecodeIsEqualWhenComments
        ) where
 
-import Control.Applicative ((<$>), (<*>))
-import Data.Attoparsec.ByteString.Char8 (IResult (..), parse)
+import Control.Monad (replicateM)
 import qualified Data.ByteString.Char8 as BS
 import Data.List (foldl')
 import qualified Data.Vector as Vector
 import Test.QuickCheck
+import Text.Parsec (parse)
 import SyntheticWeb.Plan
 
 instance Arbitrary Plan where
@@ -60,9 +61,28 @@ bytes :: Gen Bytes
 bytes = choose (500, 50000000)
 
 patternName :: Gen String
-patternName =
-  resize 20 $ listOf1 $
-    elements (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ ['_', '-'])
+patternName = (:) <$> elements initSet <*> listOf (elements contSet)
+  where
+    initSet = ['A'..'Z']
+    contSet = initSet ++ ['a'..'z'] ++ ['0'..'9'] ++ "-_."
+
+data CommentedPlan = CommentedPlan Plan BS.ByteString
+  deriving (Eq, Show)
+
+instance Arbitrary CommentedPlan where
+  arbitrary = do
+    plan <- arbitrary
+    let encodedPlan = BS.lines $ writePlan plan
+    encodedPlan' <- BS.unlines . concat <$> mapM commentLine encodedPlan
+    return $ CommentedPlan plan (encodedPlan')
+
+commentLine :: BS.ByteString -> Gen [BS.ByteString]
+commentLine str = do
+  num      <- choose (0, 3)
+  comments <- replicateM num comment
+  return $ comments ++ [str]
+  where
+    comment = BS.pack <$> (('#':) <$> listOf (elements [' '..'z']))
 
 -- | Check that the plan is expanded such that the expansion's length
 -- is equal to the sum of the weights.
@@ -71,16 +91,21 @@ vectorSizeIsSumOfWeights plan =
   let v = expand plan
   in Vector.length v == weightSum plan
 
+-- | From a plan, encode and decode it. The new plan shall be equal to
+-- the original plan.
 encodeDecodeIsEqual :: Plan -> Bool
 encodeDecodeIsEqual plan =
-  case extractResult (parse parsePlan $ writePlan plan) of
-    Just result -> result == plan
-    Nothing     -> False
+  case parse parsePlan "" $ writePlan plan of
+    Right plan' -> plan' == plan
+    Left _      -> False
 
-extractResult :: IResult BS.ByteString Plan -> Maybe Plan
-extractResult (Partial cont) = extractResult $ cont ""
-extractResult (Done _ r)     = Just r
-extractResult _              = Nothing
+-- | From an encoded plan decorated with comments, the decoded plan
+-- shall be equal to the original plan.
+encodeDecodeIsEqualWhenComments :: CommentedPlan -> Bool
+encodeDecodeIsEqualWhenComments (CommentedPlan plan encodedPlan) =
+  case parse parsePlan "" encodedPlan of
+    Right plan' -> plan' == plan
+    Left _      -> False
 
 weightSum :: Plan -> Int
 weightSum (Plan plan) = go plan

@@ -34,6 +34,7 @@ executable syntheticweb
                        , deepseq
                        , io-streams
                        , mtl
+                       , parsec
                        , random
                        , snap-core
                        , snap-server
@@ -60,6 +61,7 @@ test-suite syntheticweb-tests
                        , deepseq
                        , http-streams
                        , io-streams
+                       , parsec
                        , random
                        , snap-core
                        , snap-server

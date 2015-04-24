@@ -37,7 +37,7 @@ service port = do
                 [ (":resource", method GET $ do
                      getReplyHandler
                      generatePayload payload )
-                , (":resource", method PUT $ putReplyHandler)
+                , (":resource", method PUT putReplyHandler)
                 ] <|> resourceNotFoundHandler
 
 getReplyHandler :: Snap ()

@@ -11,26 +11,31 @@ writePlan (Plan plan) = go plan
 
 writePattern :: (Weight, Pattern) -> [String]
 writePattern (Weight w, Pattern {..}) =
-  [ printf "pattern %s with weight %d" name w
-  ,        "[" ]                           ++
-  commify (map (unlines . writeActivity) activities)   ++
-  [        "]" ]
+  printf "pattern %s with weight %d [" name w :
+    replaceLastComma (map writeActivity activities)
 
-commify :: [String] -> [String]
-commify []     = []
-commify (x:xs) = x:map (\y -> ',':y) xs
+replaceLastComma :: [String] -> [String]
+replaceLastComma [] = ["]"]
+replaceLastComma xs =
+  let x:xs' = reverse xs
+      x'    = uncommify x
+  in reverse (x':xs')
+  where
+    uncommify = go . reverse
+    go ""     = "]"
+    go (_:ys) = reverse (']':ys)
 
-writeActivity :: Activity -> [String]
+writeActivity :: Activity -> String
 writeActivity (SLEEP duration) = 
-  [ printf " SLEEP %s" (writeDuration duration) ]
+  printf " SLEEP %s," (writeDuration duration)
 writeActivity (GET headers size rate) =
-  [ printf " GET headers %s" (writeHeaders headers)
-  , printf "     payload %s" (writePayload size)
-  , printf "     rate %s" (writeRate rate) ]
+  printf " GET headers %s payload %s rate %s," (writeHeaders headers)
+                                               (writePayload size)
+                                               (writeRate rate)
 writeActivity (PUT headers size rate) =
-  [ printf " PUT headers %s" (writeHeaders headers)
-  , printf "     payload %s" (writePayload size)
-  , printf "     rate %s" (writeRate rate) ]
+  printf " PUT headers %s payload %s rate %s," (writeHeaders headers)
+                                               (writePayload size)
+                                               (writeRate rate)
 
 writeDuration :: Duration -> String
 writeDuration (Us duration) = printf "%d us" duration
