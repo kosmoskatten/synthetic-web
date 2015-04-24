@@ -7,7 +7,7 @@ import Control.Monad (void, when)
 import Control.Monad.Writer (execWriter, tell)
 import Control.Monad.State (execState, modify)
 import Data.Maybe (isNothing, isJust, fromJust)
-import SyntheticWeb.Plan (Plan, parsePlan)
+import SyntheticWeb.Plan (Plan, parsePlan, parsePlan2)
 import SyntheticWeb.Host (Host (..))
 import qualified SyntheticWeb.Client as Client
 import qualified SyntheticWeb.Observer as Observer
@@ -15,6 +15,8 @@ import qualified SyntheticWeb.Server as Server
 import System.Console.CmdArgs
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
+import Text.Parsec (ParseError)
+import Text.Parsec.ByteString (parseFromFile)
 import Text.Printf (printf)
 
 data SyntheticWeb =
@@ -79,3 +81,7 @@ prepareServices CmdLine {..} =
 readPlanFromFile :: FilePath -> IO Plan
 readPlanFromFile filePath = 
     Streams.withFileAsInput filePath $ Streams.parseFromStream parsePlan
+
+readPlanFromFile2 :: FilePath -> IO (Either ParseError Plan)
+readPlanFromFile2 = parseFromFile parsePlan2
+

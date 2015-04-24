@@ -12,12 +12,14 @@ module SyntheticWeb.Plan
        , Size (..)
        , Header (..)
        , parsePlan
+       , parsePlan2
        , writePlan
        , expand
        ) where
 
 import Data.Vector (Vector, fromList)
 import SyntheticWeb.Plan.Parser
+import SyntheticWeb.Plan.Parser2
 import SyntheticWeb.Plan.Types
 import SyntheticWeb.Plan.Writer
 

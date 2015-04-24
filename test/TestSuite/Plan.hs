@@ -6,11 +6,12 @@ module TestSuite.Plan
        ) where
 
 import Control.Applicative ((<$>), (<*>))
-import Data.Attoparsec.ByteString.Char8 (IResult (..), parse)
+--import Data.Attoparsec.ByteString.Char8 (IResult (..), parse)
 import qualified Data.ByteString.Char8 as BS
 import Data.List (foldl')
 import qualified Data.Vector as Vector
 import Test.QuickCheck
+import Text.Parsec (parse)
 import SyntheticWeb.Plan
 
 instance Arbitrary Plan where
@@ -62,7 +63,7 @@ bytes = choose (500, 50000000)
 patternName :: Gen String
 patternName =
   resize 20 $ listOf1 $
-    elements (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ ['_', '-'])
+    elements (['A'..'Z'])
 
 -- | Check that the plan is expanded such that the expansion's length
 -- is equal to the sum of the weights.
@@ -73,14 +74,9 @@ vectorSizeIsSumOfWeights plan =
 
 encodeDecodeIsEqual :: Plan -> Bool
 encodeDecodeIsEqual plan =
-  case extractResult (parse parsePlan $ writePlan plan) of
-    Just result -> result == plan
-    Nothing     -> False
-
-extractResult :: IResult BS.ByteString Plan -> Maybe Plan
-extractResult (Partial cont) = extractResult $ cont ""
-extractResult (Done _ r)     = Just r
-extractResult _              = Nothing
+  case parse parsePlan2 "" $ writePlan plan of
+    Right plan' -> plan' == plan
+    Left _      -> False
 
 weightSum :: Plan -> Int
 weightSum (Plan plan) = go plan
