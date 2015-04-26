@@ -41,9 +41,16 @@ data Activity =
   SLEEP !Duration
     -- ^ Sleep during the specified duration.
   | GET ![Header] !Payload !Rate
-    -- ^ Fetch a resource with the specified size.
-  | PUT ![Header] !Payload !Rate
-    -- ^ Upload a resource with the specified size.
+    -- ^ Fetch a resource with the specified size and the specified
+    -- rate for download payload.
+  | PUT ![Header] !Payload
+    -- ^ Upload a resource with the specified size for the upload
+    -- payload. PUT is not expected to have any other download than
+    -- the HTTP reply (i.e. no payload data).
+  | POST ![Header] !Payload !Payload !Rate
+    -- ^ Create a resource with the specified sizes for upload and
+    -- download payloads and the specified rate for the download
+    -- payload.
   deriving (Eq, Generic, NFData, Show)
 
 -- | Specification of a duration.

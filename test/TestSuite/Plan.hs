@@ -26,7 +26,9 @@ instance Arbitrary Pattern where
 instance Arbitrary Activity where
   arbitrary = oneof [ SLEEP  <$> arbitrary
                     , GET    <$> arbitrary <*> arbitrary <*> arbitrary
-                    , PUT    <$> arbitrary <*> arbitrary <*> arbitrary ]
+                    , PUT    <$> arbitrary <*> arbitrary
+                    , POST   <$> arbitrary <*> arbitrary
+                             <*> arbitrary <*> arbitrary ]
 
 instance Arbitrary Duration where
   arbitrary = oneof [ Us <$> choose (1, 1000)

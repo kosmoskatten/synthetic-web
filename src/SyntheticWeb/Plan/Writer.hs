@@ -32,10 +32,15 @@ writeActivity (GET headers size rate) =
   printf " GET headers %s payload %s rate %s," (writeHeaders headers)
                                                (writePayload size)
                                                (writeRate rate)
-writeActivity (PUT headers size rate) =
-  printf " PUT headers %s payload %s rate %s," (writeHeaders headers)
-                                               (writePayload size)
-                                               (writeRate rate)
+writeActivity (PUT headers size) =
+  printf " PUT headers %s payload %s," (writeHeaders headers)
+                                       (writePayload size)
+writeActivity (POST headers upSize downSize rate) =
+  printf " POST headers %s payload %s payload %s rate %s,"
+         (writeHeaders headers)
+         (writePayload upSize)
+         (writePayload downSize)
+         (writeRate rate)
 
 writeDuration :: Duration -> String
 writeDuration (Us duration) = printf "%d us" duration

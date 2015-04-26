@@ -44,14 +44,17 @@ parseName = do
 parseActivity :: Parser Activity
 parseActivity = do
   many (try comment)
-  try parseGet <|> try parsePut <|> try parseSleep
+  try parseGet <|> try parsePut <|> try parsePost <|> try parseSleep
   where
     parseGet = do
       spaces ; string "GET"
       GET <$> parseHeaders <*> parsePayload <*> parseRate
     parsePut = do
       spaces ; string "PUT"
-      PUT <$> parseHeaders <*> parsePayload <*> parseRate
+      PUT <$> parseHeaders <*> parsePayload
+    parsePost = do
+      spaces ; string "POST"
+      POST <$> parseHeaders <*> parsePayload <*> parsePayload <*> parseRate
     parseSleep = do
       spaces ; string "SLEEP"
       SLEEP <$> parseDuration
