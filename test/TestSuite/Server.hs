@@ -56,7 +56,7 @@ putTextPlain =
     Nothing @=? contentType
 
 serviceName :: BS.ByteString
-serviceName = "localhost"
+serviceName = "127.0.0.1"
 
 servicePort :: Int
 servicePort = 22000

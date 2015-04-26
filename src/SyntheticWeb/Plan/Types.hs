@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 module SyntheticWeb.Plan.Types
        ( Plan (..)
        , Bytes
@@ -11,25 +13,28 @@ module SyntheticWeb.Plan.Types
        , Header (..)
        ) where
 
+import Control.DeepSeq
+import GHC.Generics
+
 -- | Tell the number of bytes.
 type Bytes = Int
 
 -- | Weights are used to define probabilities for pattern and
 -- activities.
 newtype Weight = Weight Int
-  deriving (Eq, Show)
+  deriving (Eq, Generic, NFData, Show)
 
 -- | The plan is a list of weighted pattern. All weights are summed,
 -- and the probability of a pattern is proportional to the total
 -- weight sum.
 newtype Plan = Plan [ (Weight, Pattern) ]
-  deriving (Eq, Show)
+  deriving (Eq, Generic, NFData, Show)
 
 data Pattern =
   Pattern { name       :: !String
           , activities :: ![ Activity ]
           }
-  deriving (Eq, Show)
+  deriving (Eq, Generic, NFData, Show)
 
 -- | Definition of activities.
 data Activity =
@@ -39,7 +44,7 @@ data Activity =
     -- ^ Fetch a resource with the specified size.
   | PUT ![Header] !Payload !Rate
     -- ^ Upload a resource with the specified size.
-  deriving (Eq, Show)
+  deriving (Eq, Generic, NFData, Show)
 
 -- | Specification of a duration.
 data Duration =
@@ -49,11 +54,11 @@ data Duration =
     -- ^ Duration in milliseconds.
   | S !Int
     -- ^ Duration in seconds.
-  deriving (Eq, Show)
+  deriving (Eq, Generic, NFData, Show)
 
 -- | Specification of payload.
 newtype Payload = Payload Size
-  deriving (Eq, Show)
+  deriving (Eq, Generic, NFData, Show)
 
 -- | Specification of rate limitation. 
 data Rate =
@@ -61,7 +66,7 @@ data Rate =
     -- ^ Unlimited bitrate.
   | LimitedTo !Size
     -- ^ Limited to bytes/s.
-  deriving (Eq, Show)
+  deriving (Eq, Generic, NFData, Show)
 
 -- | Specification of a requested size measured in bytes. The size
 -- could be expressed exactly or as a range specified for a random
@@ -73,7 +78,7 @@ data Size =
     -- ^ A number of bytes uniformly distributed over the range.
   | Gauss !(Bytes, Bytes)
     -- ^ A numer of bytes normal distributed over the range.
-  deriving (Eq, Show)
+  deriving (Eq, Generic, NFData, Show)
 
 -- | Header flags that specifies the behavior of the communication
 -- between client and server.
@@ -92,4 +97,4 @@ data Header =
     -- ^ The content in the upstream request is text/plain.
   | ContentApplicationJSON
     -- ^ The content in the upstream request is application/json.
-  deriving (Bounded, Enum, Eq, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, NFData, Read, Show)
