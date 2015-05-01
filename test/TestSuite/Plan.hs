@@ -7,7 +7,6 @@ module TestSuite.Plan
        ) where
 
 import Control.Monad (replicateM)
-import qualified Data.ByteString.Char8 as BS
 import Data.List (foldl')
 import qualified Data.Vector as Vector
 import Test.QuickCheck
@@ -31,12 +30,15 @@ instance Arbitrary Activity where
                              <*> arbitrary <*> arbitrary ]
 
 instance Arbitrary Duration where
-  arbitrary = oneof [ Us <$> choose (1, 1000)
-                    , Ms <$> choose (1, 1000)
-                    , S  <$> choose (1, 1000) ]
+  arbitrary = oneof [ Usec <$> choose (1, 1000)
+                    , Msec <$> choose (1, 1000)
+                    , Sec  <$> choose (1, 1000) ]
 
-instance Arbitrary Payload where
-  arbitrary = Payload <$> arbitrary
+instance Arbitrary Download where
+  arbitrary = Download <$> arbitrary
+
+instance Arbitrary Upload where
+  arbitrary = Upload <$> arbitrary
 
 instance Arbitrary Rate where
   arbitrary = oneof [ return Unlimited
@@ -68,23 +70,23 @@ patternName = (:) <$> elements initSet <*> listOf (elements contSet)
     initSet = ['A'..'Z']
     contSet = initSet ++ ['a'..'z'] ++ ['0'..'9'] ++ "-_."
 
-data CommentedPlan = CommentedPlan Plan BS.ByteString
+data CommentedPlan = CommentedPlan Plan String
   deriving (Eq, Show)
 
 instance Arbitrary CommentedPlan where
   arbitrary = do
     plan <- arbitrary
-    let encodedPlan = BS.lines $ writePlan plan
-    encodedPlan' <- BS.unlines . concat <$> mapM commentLine encodedPlan
+    let encodedPlan = lines $ writePlan plan
+    encodedPlan' <- unlines . concat <$> mapM commentLine encodedPlan
     return $ CommentedPlan plan (encodedPlan')
 
-commentLine :: BS.ByteString -> Gen [BS.ByteString]
+commentLine :: String -> Gen [String]
 commentLine str = do
   num      <- choose (0, 3)
   comments <- replicateM num comment
   return $ comments ++ [str]
   where
-    comment = BS.pack <$> (('#':) <$> listOf (elements [' '..'z']))
+    comment = ('#':) <$> listOf (elements [' '..'z'])
 
 -- | Check that the plan is expanded such that the expansion's length
 -- is equal to the sum of the weights.

@@ -8,7 +8,8 @@ module SyntheticWeb.Plan
        , Activity (..)
        , Duration (..)
        , Rate (..)
-       , Payload (..)
+       , Download (..)
+       , Upload (..)
        , Size (..)
        , Header (..)
        , parsePlan

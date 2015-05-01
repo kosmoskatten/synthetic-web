@@ -7,7 +7,6 @@ import Control.DeepSeq (force)
 import Control.Exception (Exception, evaluate, throw)
 import Control.Monad (void, when)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Writer (execWriter, tell)
 import Control.Monad.State (execStateT, modify)
 import Data.Maybe (isNothing, isJust, fromMaybe, fromJust)
 import SyntheticWeb.Plan (Plan, parsePlan)
@@ -17,7 +16,7 @@ import qualified SyntheticWeb.Observer as Observer
 import qualified SyntheticWeb.Server as Server
 import System.Console.CmdArgs
 import Text.Parsec (ParseError)
-import Text.Parsec.ByteString (parseFromFile)
+import Text.Parsec.String (parseFromFile)
 import Text.Printf (printf)
 
 type Service = IO ()
@@ -98,7 +97,9 @@ prepareServices CmdLine {..} =
                liftIO (readPlanFromFile (fromJust model))
       -- Force exceptions, if any, before starting services.
       plan' <- liftIO $ evaluate $ force plan
-      modify ((:) $ Client.service (fromMaybe defWorkers workers) plan')
+      let host     = fromMaybe defHost client
+          workers' = fromMaybe defWorkers workers
+      modify ((:) $ Client.service (read host) workers' plan')
       
     when (isJust observer) $ modify ((:) Observer.service)
     when (isJust server) $ modify ((:) (Server.service $ fromJust server))

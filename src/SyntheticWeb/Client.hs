@@ -6,13 +6,14 @@ import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (async, waitAnyCancel)
 import Control.Monad (forever, replicateM, void)
 import qualified Data.Vector as V
+import SyntheticWeb.Host (Host (..))
 import SyntheticWeb.Plan (Plan, Pattern (..), expand)
 import System.Random (randomRIO)
 
 type PatternSelector = IO Pattern
 
-service :: Int -> Plan -> IO ()
-service workers plan = do
+service :: Host -> Int -> Plan -> IO ()
+service host workers plan = do
   let patterns        = expand plan
       numPatterns     = V.length patterns
       patternSelector = do

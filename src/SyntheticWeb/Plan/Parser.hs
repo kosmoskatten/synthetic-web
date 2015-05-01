@@ -7,132 +7,152 @@ import SyntheticWeb.Plan.Types ( Plan (..)
                                , Activity (..)
                                , Duration (..)
                                , Pattern (..)
-                               , Payload (..)
+                               , Download (..)
+                               , Upload (..)
                                , Size (..)
                                , Header (..)
                                )
-import Text.Parsec.ByteString
 import Text.Parsec
+import Text.Parsec.String (Parser)
+import Text.Parsec.Language (emptyDef)
+import qualified Text.Parsec.Token as Token
+
+lexer :: Token.TokenParser ()
+lexer =
+  Token.makeTokenParser emptyDef
+  { Token.commentLine   = "#"
+  , Token.identStart    = letter
+  , Token.identLetter   = alphaNum <|> oneOf "-_."
+  , Token.reservedNames = [ "pattern", "with", "weight", "download"
+                          , "upload", "get", "put", "post", "sleep"
+                          , "headers" , "rate", "limitedto"
+                          , "unlimited" , "gauss", "uniform", "exactly"
+                          , "accept-any", "accept-text-html"
+                          , "accept-text-plain", "accept-application-json"
+                          , "content-text-html", "content-text-plain"
+                          , "content-application-json", "usec", "msec", "sec" ]
+  , Token.caseSensitive = False
+  }
 
 parsePlan :: Parser Plan
 parsePlan = do
-  patterns <- many (try parsePattern)
-  spaces ; eof
+  whiteSpace
+  patterns <- many (lexeme pattern)
+  eof
   return $ Plan patterns
+  
+pattern :: Parser (Weight, Pattern)
+pattern = do
+  reserved "pattern"
+  name'        <- identifier
+  weight       <- withWeight
+  activities'' <- activities'
+  return $ (weight, Pattern name' activities'')
 
-parsePattern :: Parser (Weight, Pattern)
-parsePattern = do
-  many (try comment)
-  spaces ; string "pattern"
-  name'       <- parseName
-  weight'     <- parseWeight
-  many (try comment)
-  activities' <- listOf parseActivity
-  return (weight', Pattern name' activities')
+withWeight :: Parser Weight
+withWeight = do
+  reserved "with"
+  reserved "weight"
+  Weight <$> decimal
 
-parseWeight :: Parser Weight
-parseWeight = do
-  spaces ; string "with" ; spaces ; string "weight"
-  spaces ; Weight . read <$> many1 digit
+activities' :: Parser [Activity]
+activities' = brackets $ commaSep activity
 
-parseName :: Parser String
-parseName = do
-  let initSet = ['a'..'z'] ++ ['A'..'Z']
-      contSet = initSet ++ ['0'..'9'] ++ "-_."
-  spaces ; (:) <$> oneOf initSet <*> many (oneOf contSet)
-
-parseActivity :: Parser Activity
-parseActivity = do
-  many (try comment)
-  try parseGet <|> try parsePut <|> try parsePost <|> try parseSleep
+activity :: Parser Activity
+activity = get <|> post <|> put <|> sleep
   where
-    parseGet = do
-      spaces ; string "GET"
-      GET <$> parseHeaders <*> parsePayload <*> parseRate
-    parsePut = do
-      spaces ; string "PUT"
-      PUT <$> parseHeaders <*> parsePayload
-    parsePost = do
-      spaces ; string "POST"
-      POST <$> parseHeaders <*> parsePayload <*> parsePayload <*> parseRate
-    parseSleep = do
-      spaces ; string "SLEEP"
-      SLEEP <$> parseDuration
+    get = do
+      reserved "get"
+      GET <$> headers <*> download <*> rate
+    post = do
+      reserved "post"
+      POST <$> headers <*> upload <*> download <*> rate
+    put = do
+      reserved "put"
+      PUT <$> headers <*> upload
+    sleep = do
+      reserved "sleep"
+      SLEEP <$> duration
 
-parseDuration :: Parser Duration
-parseDuration = do
-  spaces ; duration <- read <$> many1 digit
-  unit <- try parseUs <|> try parseMs <|> try parseS
-  return $ unit duration
+download :: Parser Download
+download = do
+  reserved "download"
+  Download <$> size
+
+upload :: Parser Upload
+upload = do
+  reserved "Upload"
+  Upload <$> size
+
+rate :: Parser Rate
+rate = do
+  reserved "rate"
+  unlimited <|> limitedTo
   where
-    parseUs = do
-      spaces ; string "us" ; return Us
-    parseMs = do
-      spaces ; string "ms" ; return Ms
-    parseS  = do
-      spaces ; string "s" ; return S
+    unlimited = do
+      reserved "unlimited"
+      return Unlimited
+    limitedTo = do
+      reserved "limitedTo"
+      LimitedTo <$> size
 
-parseHeaders :: Parser [Header]
-parseHeaders = do
-  spaces ; string "headers"
-  listOf parseHeader
-
-parseRate :: Parser Rate
-parseRate = do
-  spaces ; string "rate"
-  try parseUnlimited <|> try parseLimitedTo
+size :: Parser Size
+size = exactly <|> gauss <|> uniform
   where
-    parseUnlimited = do
-      spaces ; string "unlimited" ; return Unlimited
-    parseLimitedTo = do
-      spaces ; string "limitedTo"
-      LimitedTo <$> parseSize
+    exactly = do
+      reserved "exactly"
+      Exactly <$> decimal
+    gauss = do
+      reserved "gauss"
+      curry Gauss <$> decimal <*> (char' '-' *> decimal)
+    uniform = do
+      reserved "uniform"
+      curry Uniform <$> decimal <*> (char' '-' *> decimal)
 
-parsePayload :: Parser Payload
-parsePayload = do
-  spaces ; string "payload"
-  Payload <$> parseSize
+headers :: Parser [Header]
+headers = do
+  reserved "headers"
+  brackets $ commaSep header
 
-parseSize :: Parser Size
-parseSize = try parseExactly
-            <|> try (parseDist "gauss" Gauss)
-            <|> try (parseDist "uniform" Uniform)
+header :: Parser Header
+header = reserved "accept-any" *> pure AcceptAny
+         <|> reserved "accept-text-html" *> pure AcceptTextHtml
+         <|> reserved "accept-text-plain" *> pure AcceptTextPlain
+         <|> reserved "accept-application-json" *> pure AcceptApplicationJSON
+         <|> reserved "content-text-html" *> pure ContentTextHtml
+         <|> reserved "content-text-plain" *> pure ContentTextPlain
+         <|> reserved "content-application-json" *> pure ContentApplicationJSON
+
+duration :: Parser Duration
+duration = do
+  t <- decimal
+  u <- unit
+  return $ u t
   where
-    parseExactly :: Parser Size
-    parseExactly = do
-      spaces ; string "exactly"
-      spaces ; Exactly . read <$> many1 digit
+    unit = (reserved "usec" >> pure Usec)
+           <|> (reserved "msec" >> pure Msec)
+           <|> (reserved "sec" >> pure Sec)
 
-    parseDist :: String -> ((Int, Int) -> Size) -> Parser Size
-    parseDist dist ctor = do
-      spaces ; string dist
-      spaces ; minV <- read <$> many1 digit
-      spaces ; char '-'
-      spaces ; maxV <- read <$> many1 digit
-      return $ ctor (minV, maxV)
+lexeme :: Parser a -> Parser a
+lexeme = Token.lexeme lexer
 
-parseHeader :: Parser Header
-parseHeader = do
-  spaces ; read <$> headers
-    where
-      headers =
-        choice [ try $ string "AcceptAny"
-               , try $ string "AcceptTextHtml"
-               , try $ string "AcceptTextPlain"
-               , try $ string "AcceptApplicationJSON"
-               , try $ string "ContentTextHtml"
-               , try $ string "ContentTextPlain"
-               , try $ string "ContentApplicationJSON"
-               ]
+brackets :: Parser a -> Parser a
+brackets p = lexeme $ Token.brackets lexer p
 
-listOf :: Parser a -> Parser [a]
-listOf p = 
-    between (spaces >> char '[') (char ']') $
-            choice [ try $ (p <* spaces) `sepBy1` char ','
-                   , spaces *> return []
-                   ]
+commaSep :: Parser a -> Parser [a]
+commaSep p = lexeme $ Token.commaSep lexer p
 
-comment :: Parser ()
-comment = do
-  spaces ; char '#'
-  void $ manyTill anyChar (try endOfLine)
+identifier :: Parser String
+identifier = lexeme $ Token.identifier lexer
+
+decimal :: Parser Int
+decimal = fromInteger <$> (lexeme $ Token.decimal lexer)
+
+reserved :: String -> Parser ()
+reserved str = lexeme $ Token.reserved lexer str
+
+char' :: Char -> Parser ()
+char' = lexeme . void . char
+
+whiteSpace :: Parser ()
+whiteSpace = Token.whiteSpace lexer

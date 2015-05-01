@@ -8,7 +8,8 @@ module SyntheticWeb.Plan.Types
        , Activity (..)
        , Duration (..)
        , Rate (..)
-       , Payload (..)
+       , Download (..)
+       , Upload (..)
        , Size (..)
        , Header (..)
        ) where
@@ -40,14 +41,14 @@ data Pattern =
 data Activity =
   SLEEP !Duration
     -- ^ Sleep during the specified duration.
-  | GET ![Header] !Payload !Rate
-    -- ^ Fetch a resource with the specified size and the specified
-    -- rate for download payload.
-  | PUT ![Header] !Payload
+  | GET ![Header] !Download !Rate
+    -- ^ Fetch a resource with the specified payload size and the
+    -- specified rate for download payload.
+  | PUT ![Header] !Upload
     -- ^ Upload a resource with the specified size for the upload
     -- payload. PUT is not expected to have any other download than
     -- the HTTP reply (i.e. no payload data).
-  | POST ![Header] !Payload !Payload !Rate
+  | POST ![Header] !Upload !Download !Rate
     -- ^ Create a resource with the specified sizes for upload and
     -- download payloads and the specified rate for the download
     -- payload.
@@ -55,16 +56,20 @@ data Activity =
 
 -- | Specification of a duration.
 data Duration =
-  Us !Int
+  Usec !Int
     -- ^ Duration in microseconds.
-  | Ms !Int
+  | Msec !Int
     -- ^ Duration in milliseconds.
-  | S !Int
+  | Sec !Int
     -- ^ Duration in seconds.
   deriving (Eq, Generic, NFData, Show)
 
--- | Specification of payload.
-newtype Payload = Payload Size
+-- | Specification of download payload size.
+newtype Download = Download Size
+  deriving (Eq, Generic, NFData, Show)
+
+-- | Specification of upload payload size.
+newtype Upload = Upload Size
   deriving (Eq, Generic, NFData, Show)
 
 -- | Specification of rate limitation. 
@@ -104,4 +109,5 @@ data Header =
     -- ^ The content in the upstream request is text/plain.
   | ContentApplicationJSON
     -- ^ The content in the upstream request is application/json.
-  deriving (Bounded, Enum, Eq, Generic, NFData, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, NFData, Show)
+

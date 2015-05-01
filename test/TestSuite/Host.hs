@@ -2,7 +2,6 @@ module TestSuite.Host
        ( encodeDecodeIsEqual
        ) where
 
-import Control.Applicative ((<$>), (<*>))
 import Test.QuickCheck
 import SyntheticWeb.Host (Host (..))
 
