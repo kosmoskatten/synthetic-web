@@ -101,7 +101,7 @@ prepareServices CmdLine {..} =
           workers' = fromMaybe defWorkers workers
       modify ((:) $ Client.service (read host) workers' plan')
       
-    when (isJust observer) $ modify ((:) Observer.service)
+    when (isJust observer) $ modify ((:) (Observer.service $ fromJust observer))
     when (isJust server) $ modify ((:) (Server.service $ fromJust server))
 
 readPlanFromFile :: FilePath -> IO (Either ParseError Plan)
