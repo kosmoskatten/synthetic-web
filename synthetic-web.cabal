@@ -17,7 +17,9 @@ cabal-version:       >=1.10
 
 executable syntheticweb
   main-is:             Main.hs
-  other-modules:       SyntheticWeb.Host
+  other-modules:       SyntheticWeb.Counter
+                       SyntheticWeb.Counter.ByteCounter
+                       SyntheticWeb.Host
                        SyntheticWeb.Plan
                        SyntheticWeb.Plan.Parser
                        SyntheticWeb.Plan.Types
@@ -48,7 +50,8 @@ executable syntheticweb
 test-suite syntheticweb-tests
   type:                exitcode-stdio-1.0
   main-is:             TestSuite.hs
-  other-modules:       TestSuite.Plan
+  other-modules:       TestSuite.Counter
+                       TestSuite.Plan
                        TestSuite.Host
                        TestSuite.Server
   build-depends:       base < 5
