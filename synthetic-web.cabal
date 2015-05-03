@@ -38,6 +38,7 @@ executable syntheticweb
                        , random
                        , snap-core
                        , snap-server
+                       , time
                        , transformers
                        , vector
   hs-source-dirs:      src
