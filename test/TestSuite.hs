@@ -16,7 +16,10 @@ testSuite =
   [ testGroup "Counter property tests"
     [ testProperty "IncDownloadWithAmount" Counter.incDownloadWithAmount
     , testProperty "IncUploadWithAmount" Counter.incUploadWithAmount
-    , testProperty "ConvertBytesToBits" Counter.convertBytesToBits
+--    , testProperty "ThroughputThresholds" Counter.throughputThresholds
+    ]
+  , testGroup "Counter unit tests"
+    [ testCase "Convert1ByteToThroughput" Counter.convert1ByteToThroughput
     ]
   , testGroup "Plan property tests"
     [ testProperty "VectorSizeIsSumOfWeights" Plan.vectorSizeIsSumOfWeights

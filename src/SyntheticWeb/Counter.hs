@@ -1,8 +1,9 @@
 module SyntheticWeb.Counter
        ( ByteCounter (..)
+       , Throughput (..)
        , incDownload
        , incUpload
-       , bytesToBits
+       , toThroughput
        ) where
 
 import SyntheticWeb.Counter.ByteCounter
