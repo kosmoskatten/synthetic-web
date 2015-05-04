@@ -12,13 +12,14 @@ import Test.QuickCheck
 import GHC.Int (Int64)
 
 instance Arbitrary ByteCounter where
-  arbitrary = ByteCounter <$> choose (0, maxBound) <*> choose (0, maxBound)
+  arbitrary = ByteCounter <$> choose (0, 2000000)
+                          <*> choose (0, 2000000)
 
 data IncSpec = IncSpec ByteCounter Int64
   deriving Show
 
 instance Arbitrary IncSpec where
-  arbitrary = IncSpec <$> arbitrary <*> choose (0, maxBound)
+  arbitrary = IncSpec <$> arbitrary <*> choose (0, 2000000)
 
 incDownloadWithAmount :: IncSpec -> Bool
 incDownloadWithAmount (IncSpec orig amount) =
@@ -38,10 +39,18 @@ throughputThresholds byteCounter@ByteCounter {..} =
     in dl `matches` (download * 8) && ul `matches` (upload * 8)
     where
       matches :: Throughput -> Int64 -> Bool
-      matches (Bps _) bits  = bits < 500
-      matches (Kbps _) bits = bits < 500000
-      matches (Mbps _) bits = bits < 500000000
-      matches (Gbps _) bits = bits >= 500000000
+      matches (Bps bits)  bits' =
+        -- The throughput shall not be scaled.
+        bits' < 500 && bits == fromIntegral bits'
+      matches (Kbps bits) bits' =
+        -- The throughput shall be scaled down by 1000
+        bits' < 500000 && bits == fromIntegral bits' * 0.001
+      matches (Mbps bits) bits' =
+        -- The throughput shall be scaled down by 1000000
+        bits' < 500000000 && bits == fromIntegral bits' * 0.000001
+      matches (Gbps bits) bits' =
+        -- The throughput shall be scaled down by 1000000000
+        bits' >= 500000000 && bits == fromIntegral bits' * 0.000000001
 
 convert1ByteToThroughput :: Assertion
 convert1ByteToThroughput = do
