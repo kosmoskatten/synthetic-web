@@ -19,6 +19,7 @@ executable syntheticweb
   main-is:             Main.hs
   other-modules:       SyntheticWeb.Counter
                        SyntheticWeb.Counter.ByteCounter
+                       SyntheticWeb.Counter.Throughput
                        SyntheticWeb.Host
                        SyntheticWeb.Plan
                        SyntheticWeb.Plan.Parser

@@ -16,6 +16,7 @@ testSuite =
   [ testGroup "Counter property tests"
     [ testProperty "IncDownloadWithAmount" Counter.incDownloadWithAmount
     , testProperty "IncUploadWithAmount" Counter.incUploadWithAmount
+    , testProperty "ConvertBytesToBits" Counter.convertBytesToBits
     ]
   , testGroup "Plan property tests"
     [ testProperty "VectorSizeIsSumOfWeights" Plan.vectorSizeIsSumOfWeights

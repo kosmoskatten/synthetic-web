@@ -1,6 +1,7 @@
 module TestSuite.Counter
        ( incDownloadWithAmount
        , incUploadWithAmount
+       , convertBytesToBits
        ) where
 
 import SyntheticWeb.Counter
@@ -30,3 +31,6 @@ incUploadWithAmount (TestSpec orig amount) =
   let new = incUpload amount orig
   in upload new == upload orig + amount
      && download new == download orig
+
+convertBytesToBits :: Int64 -> Bool
+convertBytesToBits n = bytesToBits n == n * 8
