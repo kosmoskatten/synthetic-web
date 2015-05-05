@@ -47,7 +47,7 @@ pattern = do
   name'        <- identifier
   weight       <- withWeight
   activities'' <- activities'
-  return $ (weight, Pattern name' activities'')
+  return (weight, Pattern name' activities'')
 
 withWeight :: Parser Weight
 withWeight = do
@@ -146,7 +146,7 @@ identifier :: Parser String
 identifier = lexeme $ Token.identifier lexer
 
 decimal :: Parser Int
-decimal = fromInteger <$> (lexeme $ Token.decimal lexer)
+decimal = fromInteger <$> lexeme (Token.decimal lexer)
 
 reserved :: String -> Parser ()
 reserved str = lexeme $ Token.reserved lexer str

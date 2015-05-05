@@ -19,6 +19,8 @@ executable syntheticweb
   main-is:             Main.hs
   other-modules:       SyntheticWeb.Counter
                        SyntheticWeb.Counter.ByteCounter
+                       SyntheticWeb.Counter.GlobalCounter
+                       SyntheticWeb.Counter.PatternCounter
                        SyntheticWeb.Counter.Throughput
                        SyntheticWeb.Host
                        SyntheticWeb.Plan
@@ -29,6 +31,7 @@ executable syntheticweb
                        SyntheticWeb.Observer
                        SyntheticWeb.Server
                        SyntheticWeb.RandomData
+                       SyntheticWeb.Task
   build-depends:       base <5
                        , async
                        , attoparsec
@@ -41,6 +44,7 @@ executable syntheticweb
                        , random
                        , snap-core
                        , snap-server
+                       , stm
                        , time
                        , transformers
                        , vector
@@ -71,6 +75,7 @@ test-suite syntheticweb-tests
                        , random
                        , snap-core
                        , snap-server
+                       , stm
                        , vector
   hs-source-dirs:      src, test
   default-language:    Haskell2010

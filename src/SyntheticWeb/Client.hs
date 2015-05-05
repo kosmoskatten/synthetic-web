@@ -20,11 +20,11 @@ service host workers plan = do
         index <- randomRIO (0, numPatterns - 1)
         return $ V.unsafeIndex patterns  index
   void $ waitAnyCancel =<<
-    (replicateM workers $ async (worker patternSelector))
+    replicateM workers (async (worker patternSelector))
 
 worker :: PatternSelector -> IO ()
 worker patternSelector =
   forever $ do
     pattern <- patternSelector
-    putStrLn $ show pattern
+    print pattern
     threadDelay 1000000

@@ -16,7 +16,7 @@ testSuite =
   [ testGroup "Counter property tests"
     [ testProperty "IncDownloadWithAmount" Counter.incDownloadWithAmount
     , testProperty "IncUploadWithAmount" Counter.incUploadWithAmount
---    , testProperty "ThroughputThresholds" Counter.throughputThresholds
+    , testProperty "ThroughputThresholds" Counter.throughputThresholds
     ]
   , testGroup "Counter unit tests"
     [ testCase "Convert1ByteToThroughput" Counter.convert1ByteToThroughput

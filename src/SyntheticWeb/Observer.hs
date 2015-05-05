@@ -46,9 +46,8 @@ resourceNotFound = do
 
 renderStatsHeader :: UTCTime -> Snap [BS.ByteString]
 renderStatsHeader startTime = do
-  now <- liftIO $ getCurrentTime'
-  
-  return $ [ "Up for " `BS.append` (BS.pack $ show (now `diffUTCTime` startTime))]  
+  now <- liftIO getCurrentTime'
+  return [ "Up for " `BS.append` BS.pack (show (now `diffUTCTime` startTime))]  
 
 htmlHead :: [BS.ByteString]
 htmlHead =
