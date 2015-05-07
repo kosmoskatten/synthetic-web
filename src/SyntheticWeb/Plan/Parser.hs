@@ -39,7 +39,7 @@ parsePlan = do
   whiteSpace
   patterns <- many (lexeme pattern)
   eof
-  return $ Plan patterns
+  return $! Plan patterns
   
 pattern :: Parser (Weight, Pattern)
 pattern = do
@@ -47,7 +47,7 @@ pattern = do
   name'        <- identifier
   weight       <- withWeight
   activities'' <- activities'
-  return (weight, Pattern name' activities'')
+  return $! (weight, Pattern name' activities'')
 
 withWeight :: Parser Weight
 withWeight = do
@@ -127,7 +127,7 @@ duration :: Parser Duration
 duration = do
   t <- decimal
   u <- unit
-  return $ u t
+  return $! u t
   where
     unit = (reserved "usec" >> pure Usec)
            <|> (reserved "msec" >> pure Msec)

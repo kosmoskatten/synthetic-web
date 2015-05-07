@@ -14,6 +14,7 @@ import SyntheticWeb.Host (Host (..))
 import qualified SyntheticWeb.Client as Client
 import qualified SyntheticWeb.Observer as Observer
 import qualified SyntheticWeb.Server as Server
+import SyntheticWeb.Task (mkTaskSet)
 import System.Console.CmdArgs
 import Text.Parsec (ParseError)
 import Text.Parsec.String (parseFromFile)
@@ -95,11 +96,12 @@ prepareServices CmdLine {..} =
     when (isJust client) $ do
       plan <- either (throw . ParseException) id <$>
                liftIO (readPlanFromFile (fromJust model))
-      -- Force exceptions, if any, before starting services.
-      plan' <- liftIO $ evaluate $ force plan
+      -- Force exceptions, if any, before everything else.
+      plan'   <- liftIO $ evaluate $ force plan
+      taskSet <- liftIO $ mkTaskSet plan'
       let host     = fromMaybe defHost client
           workers' = fromMaybe defWorkers workers
-      modify ((:) $ Client.service (read host) workers' plan')
+      modify ((:) $ Client.service (read host) workers' (snd taskSet))
       
     when (isJust observer) $ modify ((:) (Observer.service $ fromJust observer))
     when (isJust server) $ modify ((:) (Server.service $ fromJust server))

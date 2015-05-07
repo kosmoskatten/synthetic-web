@@ -2,22 +2,20 @@
 module SyntheticWeb.Counter.ByteCounter
        ( ByteCounter (..)
        , empty
-       , incDownload
-       , incUpload
+       , addByteCount
        ) where
 
 import GHC.Int (Int64)
 
 data ByteCounter =
-  ByteCounter { download :: !Int64
-              , upload   :: !Int64 }
+  ByteCounter { download :: {-# UNPACK #-} !Int64
+              , upload   :: {-# UNPACK #-} !Int64 }
   deriving (Show)
 
 empty :: ByteCounter
 empty = ByteCounter 0 0
 
-incDownload :: Int64 -> ByteCounter -> ByteCounter
-incDownload amount bc@ByteCounter {..} = bc { download = download + amount }
-
-incUpload :: Int64 -> ByteCounter -> ByteCounter
-incUpload amount bc@ByteCounter {..} = bc { upload = upload + amount }
+addByteCount :: ByteCounter -> ByteCounter -> ByteCounter
+addByteCount b1 b2 = ByteCounter { download = download b1 + download b2
+                                 , upload   = upload b1   + upload b2
+                                 }

@@ -5,26 +5,30 @@ module SyntheticWeb.Client
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (async, waitAnyCancel)
 import Control.Monad (forever, replicateM, void)
-import qualified Data.Vector as V
+import Data.Vector (Vector)
+import qualified Data.Vector as Vector
+import SyntheticWeb.Counter (CounterPair)
 import SyntheticWeb.Host (Host (..))
-import SyntheticWeb.Plan (Plan, Pattern (..), expand)
+import SyntheticWeb.Plan (Plan, Pattern (..))
+import SyntheticWeb.Task (Task, patternFrom)
 import System.Random (randomRIO)
 
-type PatternSelector = IO Pattern
+type TaskSelector = IO Task
 
-service :: Host -> Int -> Plan -> IO ()
-service host workers plan = do
-  let patterns        = expand plan
-      numPatterns     = V.length patterns
-      patternSelector = do
-        index <- randomRIO (0, numPatterns - 1)
-        return $ V.unsafeIndex patterns  index
+service :: Host -> Int -> Vector Task -> IO ()
+service host numWorkers tasks = do
+  let taskSelector = mkTaskSelector tasks
   void $ waitAnyCancel =<<
-    replicateM workers (async (worker patternSelector))
+    replicateM numWorkers (async $ worker taskSelector)
 
-worker :: PatternSelector -> IO ()
-worker patternSelector =
+mkTaskSelector :: Vector Task -> TaskSelector
+mkTaskSelector tasks =
+  let len = Vector.length tasks
+  in Vector.unsafeIndex tasks <$> randomRIO (0, len - 1)
+
+worker :: TaskSelector -> IO ()
+worker select =
   forever $ do
-    pattern <- patternSelector
-    print pattern
+    task <- select
+    print $ patternFrom task
     threadDelay 1000000

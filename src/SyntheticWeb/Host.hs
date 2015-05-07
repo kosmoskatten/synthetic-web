@@ -29,7 +29,7 @@ getHost = do
   hostname' <- getHostname
   skipSpaces ; char ':'
   port'     <- getPort
-  return Host { hostname = hostname', port = port' }
+  return $! Host { hostname = hostname', port = port' }
 
 getHostname :: ReadP String
 getHostname = do
