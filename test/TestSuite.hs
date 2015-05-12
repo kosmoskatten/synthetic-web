@@ -3,6 +3,7 @@ module Main (main) where
 import Test.Framework (Test, defaultMain, testGroup)
 import Test.Framework.Providers.HUnit (testCase)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
+import qualified TestSuite.Client as Client
 import qualified TestSuite.Counter as Counter
 import qualified TestSuite.Host as Host
 import qualified TestSuite.Plan as Plan
@@ -43,6 +44,10 @@ testSuite =
     ]
   , testGroup "Host property tests"
     [ testProperty "DecodeEncodeIsEqual" Host.encodeDecodeIsEqual
+    ]
+  , testGroup "Client feature tests"
+    [ testCase "TimedActionShallTimeCorrectly" 
+               Client.timedActionShallTimeCorrectly
     ]
   , testGroup "Server feature tests"
     [ testCase "Get text/plain size 667" Server.getTextPlainSize667

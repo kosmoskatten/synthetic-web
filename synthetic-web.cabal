@@ -16,21 +16,22 @@ build-type:            Simple
 cabal-version:         >=1.10
 
 library
-  exposed-modules:     SyntheticWeb.Counter
-                       SyntheticWeb.Counter.ByteCounter
-                       SyntheticWeb.Counter.GlobalCounter
-                       SyntheticWeb.Counter.PatternCounter
-                       SyntheticWeb.Counter.Throughput
+  exposed-modules:     SyntheticWeb.Counter                       
                        SyntheticWeb.Host
-                       SyntheticWeb.Plan
-                       SyntheticWeb.Plan.Parser
-                       SyntheticWeb.Plan.Types
-                       SyntheticWeb.Plan.Writer
+                       SyntheticWeb.Plan                       
                        SyntheticWeb.Client
                        SyntheticWeb.Observer
                        SyntheticWeb.Server
                        SyntheticWeb.RandomData
                        SyntheticWeb.Task
+  other-modules:       SyntheticWeb.Client.TimedAction
+                       SyntheticWeb.Counter.ByteCounter
+                       SyntheticWeb.Counter.GlobalCounter
+                       SyntheticWeb.Counter.PatternCounter
+                       SyntheticWeb.Counter.Throughput
+                       SyntheticWeb.Plan.Parser
+                       SyntheticWeb.Plan.Types
+                       SyntheticWeb.Plan.Writer
   build-depends:       base <5
                        , async
                        , bytestring
@@ -74,6 +75,7 @@ test-suite syntheticweb-tests
   type:                exitcode-stdio-1.0
   main-is:             TestSuite.hs
   other-modules:       Generators.Plan
+                       TestSuite.Client
                        TestSuite.Counter
                        TestSuite.Plan
                        TestSuite.Host
