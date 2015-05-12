@@ -89,7 +89,7 @@ test-suite syntheticweb-tests
                        , bytestring
                        , cmdargs
                        , deepseq
-                       , http-streams
+                       , http-streams ==0.10.0.0
                        , io-streams
                        , mtl
                        , parsec

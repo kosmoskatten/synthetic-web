@@ -74,9 +74,10 @@ get :: BS.ByteString
 get url reqHeaders =
   withConnection (openConnection serviceName 
                   (fromIntegral servicePort)) $ \conn -> do
-    request <- buildRequest $ do
-      http GET url
-      mapM_ (uncurry setHeader) reqHeaders
+    let request = 
+            buildRequest $ do
+              http GET url
+              mapM_ (uncurry setHeader) reqHeaders
     sendRequest conn request emptyBody
     receiveResponse conn $ \resp inp -> do
       let respCode = getStatusCode resp
@@ -89,9 +90,10 @@ put :: BS.ByteString
 put url reqHeaders =
   withConnection (openConnection serviceName
                   (fromIntegral servicePort)) $ \conn -> do
-    request <- buildRequest $ do
-      http PUT url
-      mapM_ (uncurry setHeader) reqHeaders
+    let request = 
+            buildRequest $ do
+              http PUT url
+              mapM_ (uncurry setHeader) reqHeaders
     sendRequest conn request $ Streams.write (Just "Just some bytes")
     receiveResponse conn $ \resp inp -> do
       let respCode = getStatusCode resp
