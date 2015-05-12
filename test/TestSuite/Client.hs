@@ -14,5 +14,4 @@ timedActionShallTimeCorrectly = do
   ((), timeItTook) <- timedAction $ threadDelay 500000
   let t   = toEnum 1000000000000 -- One second.
       t'  = t * 0.5
-      t'' = t' * 1.1
-  assertBool "Shall be within range" $ timeItTook >= t' && timeItTook <= t''
+  assertBool "Shall be within range" $ timeItTook >= t' && timeItTook <= t

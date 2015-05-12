@@ -24,7 +24,8 @@ library
                        SyntheticWeb.Server
                        SyntheticWeb.RandomData
                        SyntheticWeb.Task
-  other-modules:       SyntheticWeb.Client.TimedAction
+  other-modules:       SyntheticWeb.Client.Executor
+                       SyntheticWeb.Client.TimedAction
                        SyntheticWeb.Counter.ByteCounter
                        SyntheticWeb.Counter.GlobalCounter
                        SyntheticWeb.Counter.PatternCounter
