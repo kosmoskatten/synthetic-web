@@ -10,7 +10,6 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.State (execStateT, modify)
 import Data.Maybe (isNothing, isJust, fromMaybe, fromJust)
 import SyntheticWeb.Plan (Plan, parsePlan)
-import SyntheticWeb.Host (Host (..))
 import qualified SyntheticWeb.Client as Client
 import qualified SyntheticWeb.Observer as Observer
 import qualified SyntheticWeb.Server as Server
@@ -102,9 +101,10 @@ prepareServices CmdLine {..} =
       let host     = fromMaybe defHost client
           workers' = fromMaybe defWorkers workers
       modify ((:) $ Client.service (read host) workers' (snd taskSet))
+      when (isJust observer) $
+           modify ((:) $ Observer.service (fromJust observer) (fst taskSet))
       
-    when (isJust observer) $ modify ((:) (Observer.service $ fromJust observer))
-    when (isJust server) $ modify ((:) (Server.service $ fromJust server))
+    when (isJust server) $ modify ((:) $ Server.service (fromJust server))
 
 readPlanFromFile :: FilePath -> IO (Either ParseError Plan)
 readPlanFromFile = parseFromFile parsePlan

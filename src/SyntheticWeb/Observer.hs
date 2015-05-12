@@ -20,9 +20,10 @@ import Snap.Core ( Snap
 import Snap.Http.Server ( defaultConfig
                         , httpServe
                         , setPort )
+import SyntheticWeb.Counter (CounterSet)
 
-service :: Int -> IO ()
-service port = do
+service :: Int -> CounterSet -> IO ()
+service port _ = do
   startTime <- getCurrentTime'
   let config = setPort port defaultConfig
   httpServe config $
