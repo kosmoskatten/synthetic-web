@@ -60,7 +60,7 @@ activationCounterPropagation plan@(Plan plan') =
     (counters, tasks) <- run (mkTaskSet plan)
     run $ Vector.mapM_ (atomically . activatePattern . counterFrom) tasks
 
-    (g, ps) <- run (atomically $ unwrapCounters counters)
+    FrozenSet (g, ps) <- run (atomically $ freeze counters)
     -- Check that the total activations is equal to the number of
     -- tasks.
     assert $ (fromIntegral $ Vector.length tasks) == totalActivations g
@@ -78,7 +78,7 @@ byteCounterPropagation plan@(Plan plan') =
     let bytes = ByteCounter { download = 1, upload = 2 }
     run $ Vector.mapM_ (atomically . updateByteCount bytes . counterFrom) tasks
 
-    (g, ps) <- run (atomically $ unwrapCounters counters)
+    FrozenSet (g, ps) <- run (atomically $ freeze counters)
     -- Check that the total download bytes is equal to the number of
     -- tasks, and that the upload bytes are twice as big.
     let numTasks = fromIntegral $ Vector.length tasks
@@ -116,7 +116,7 @@ timeCounterPropagation setter ggetter pgetter plan@(Plan plan') =
     let delta = toEnum 1
     run $ Vector.mapM_ (atomically . setter delta . counterFrom) tasks
 
-    (g, ps) <- run (atomically $ unwrapCounters counters)
+    FrozenSet (g, ps) <- run (atomically $ freeze counters)
     -- Check that the total time is equal to the "time" proportial to
     -- the number of tasks.
     let totTime = toEnum $ Vector.length tasks

@@ -1,15 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 module SyntheticWeb.Observer
        ( service
        ) where
 
 import Control.Applicative ((<|>))
-import Control.DeepSeq (force)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString.Char8 as BS
-import Data.Time ( UTCTime
-                 , diffUTCTime
-                 , getCurrentTime )
 import Snap.Core ( Snap
                  , ifTop
                  , emptyResponse
@@ -20,23 +17,30 @@ import Snap.Core ( Snap
 import Snap.Http.Server ( defaultConfig
                         , httpServe
                         , setPort )
-import SyntheticWeb.Counter (CounterSet)
+import SyntheticWeb.Counter ( ByteCounter (..)
+                            , CounterSet
+                            , FrozenSet (..)
+                            , GlobalCounter (..)
+                            , atomically
+                            , freeze )
+import Text.Printf (printf)
 
 service :: Int -> CounterSet -> IO ()
-service port _ = do
-  startTime <- getCurrentTime'
+service port counterSet = do
   let config = setPort port defaultConfig
   httpServe config $
-    ifTop (renderStatistics startTime)
+    ifTop (renderStatistics counterSet)
     <|> resourceNotFound
 
-renderStatistics :: UTCTime -> Snap ()
-renderStatistics startTime = do
+renderStatistics :: CounterSet -> Snap ()
+renderStatistics counterSet = do
+  frozenSet <- liftIO (atomically $ freeze counterSet)
   let response = setResponseCode 200 $
                  setContentType "text/html" emptyResponse
   putResponse response
-  statsHeader <- renderStatsHeader startTime
-  writeBS $ BS.unlines (htmlHead ++ statsHeader ++ htmlTail)
+  writeBS htmlHead
+  writeBS $ globalStats frozenSet
+  writeBS htmlFoot
 
 resourceNotFound :: Snap ()
 resourceNotFound = do
@@ -45,13 +49,17 @@ resourceNotFound = do
   putResponse response
   writeBS "The requested resource was not found"
 
-renderStatsHeader :: UTCTime -> Snap [BS.ByteString]
-renderStatsHeader startTime = do
-  now <- liftIO getCurrentTime'
-  return [ "Up for " `BS.append` BS.pack (show (now `diffUTCTime` startTime))]  
+globalStats :: FrozenSet -> BS.ByteString
+globalStats (FrozenSet (GlobalCounter {..}, _)) = BS.unlines
+  [ "============================================================<br>"
+  , BS.pack $ printf " Total pattern time: %.2fs<br>"
+                     ((realToFrac totalPatternTime) :: Double)
+  , BS.pack $ printf " Total downloaded bytes: %ld<br>" $ 
+                     download totalByteCount
+  ]
 
-htmlHead :: [BS.ByteString]
-htmlHead =
+htmlHead :: BS.ByteString
+htmlHead = BS.unlines
   [ "<!DOCTYPE html>"
   , "<html>"
   , "<title>Synthetic Web Statistics</title>"
@@ -65,13 +73,8 @@ htmlHead =
   , "<body>"
   ]
 
-htmlTail :: [BS.ByteString]
-htmlTail =
+htmlFoot :: BS.ByteString
+htmlFoot = BS.unlines
   [ "</body>"
   , "</html>"
   ]
-
-getCurrentTime' :: IO UTCTime
-getCurrentTime' = force <$> getCurrentTime
-
-  

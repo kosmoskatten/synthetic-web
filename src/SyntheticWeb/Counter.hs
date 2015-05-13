@@ -1,9 +1,11 @@
 {-# LANGUAGE TupleSections #-}
 module SyntheticWeb.Counter
-       ( GlobalCounter (..)
+       ( ByteCounter (..)
+       , GlobalCounter (..)
        , PatternCounter (..)
        , CounterPair (..)
        , CounterSet (..)
+       , FrozenSet (..)
        , mkGlobalCounter
        , mkPatternCounter
        , activatePattern
@@ -11,10 +13,11 @@ module SyntheticWeb.Counter
        , updatePatternTime
        , updateSleepTime
        , updateLatencyTime
-       , unwrapCounters
+       , freeze
+       , atomically
        ) where
 
-import Control.Concurrent.STM (STM, TVar, modifyTVar, readTVar)
+import Control.Concurrent.STM (STM, TVar, atomically, modifyTVar, readTVar)
 import Data.Time (NominalDiffTime)
 import SyntheticWeb.Counter.ByteCounter
 import SyntheticWeb.Counter.GlobalCounter
@@ -27,6 +30,9 @@ newtype CounterPair = CounterPair (TVar PatternCounter, TVar GlobalCounter)
 
 -- | A set of the GlobalCounter and all the PatternCounters.
 newtype CounterSet = CounterSet (TVar GlobalCounter, [TVar PatternCounter])
+
+-- | A frozen set of Global counter and all the PatternCounters.
+newtype FrozenSet = FrozenSet (GlobalCounter, [PatternCounter])
 
 -- | Activate a pattern. It will increase the pattern local
 -- activations counter and the global total activations counter.
@@ -64,8 +70,11 @@ updateLatencyTime delta (CounterPair (p, g)) = do
   modifyTVar p $ \p' -> p' { latencyTime = latencyTime p' + delta }
   modifyTVar g $ \g' -> g' { totalLatencyTime = totalLatencyTime g' + delta }
 
--- | Unwrap a snapshot of the counters from TVar to pure.
-unwrapCounters :: CounterSet -> STM (GlobalCounter, [PatternCounter])
-unwrapCounters (CounterSet (g, ps)) = (,) <$> readTVar g <*> mapM readTVar ps
+-- | Freeze a snapshot of the counters from TVar to pure.
+freeze :: CounterSet -> STM FrozenSet
+freeze (CounterSet (g, ps)) = do
+    g'  <- readTVar g
+    ps' <- mapM readTVar ps
+    return $ FrozenSet (g', ps')
 
 
