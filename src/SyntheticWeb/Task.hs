@@ -14,6 +14,7 @@ import SyntheticWeb.Counter ( CounterPair (..)
                             , CounterSet (..)
                             , GlobalCounter
                             , PatternCounter (patternName)
+                            , mkCounterSet
                             , mkGlobalCounter
                             , mkPatternCounter )
 import SyntheticWeb.Plan ( Plan (..)
@@ -37,7 +38,8 @@ mkTaskSet plan = do
   globalCounter   <- newTVarIO mkGlobalCounter
   taskList        <- mkTaskList globalCounter plan
   patternCounters <- uniquePatternCounters taskList
-  return $! (CounterSet (globalCounter, patternCounters), fromList taskList)
+  counterSet      <- mkCounterSet globalCounter patternCounters
+  return $! (counterSet, fromList taskList)
 
 mkTaskList :: TVar GlobalCounter -> Plan -> IO [Task]
 mkTaskList global (Plan plan) = concat <$> mapM go plan

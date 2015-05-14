@@ -2,7 +2,6 @@ module SyntheticWeb.Client
        ( service
        ) where
 
-import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (async, waitAnyCancel)
 import Control.Concurrent.STM (atomically)
 import Control.Monad (forever, replicateM, void)
@@ -12,7 +11,6 @@ import SyntheticWeb.Client.Executor (executeTask)
 import SyntheticWeb.Client.TimedAction (timedAction)
 import SyntheticWeb.Counter (activatePattern, updatePatternTime)
 import SyntheticWeb.Host (Host (..))
-import SyntheticWeb.Plan (Plan, Pattern (..))
 import SyntheticWeb.Task (Task, counterFrom)
 import System.Random (randomRIO)
 
@@ -20,7 +18,7 @@ type TaskSelector = IO Task
 
 -- | Initialize the client service.
 service :: Host -> Int -> Vector Task -> IO ()
-service host numWorkers tasks = do
+service _ numWorkers tasks = do
   let taskSelector = mkTaskSelector tasks
   void $ waitAnyCancel =<<
     replicateM numWorkers (async $ worker taskSelector)

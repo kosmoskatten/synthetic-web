@@ -47,7 +47,7 @@ patternCountersAsManyAsPatterns :: Plan -> Property
 patternCountersAsManyAsPatterns plan@(Plan patterns) =
   monadicIO $ do
     (cs, _) <- run (mkTaskSet plan)
-    let CounterSet (_, patternCounters) = cs
+    let CounterSet (_, _, patternCounters) = cs
     assert $ length patterns == length patternCounters
 
 weightSum :: Plan -> Int

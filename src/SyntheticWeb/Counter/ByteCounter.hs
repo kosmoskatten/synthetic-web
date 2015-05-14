@@ -1,4 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
 module SyntheticWeb.Counter.ByteCounter
        ( ByteCounter (..)
        , empty

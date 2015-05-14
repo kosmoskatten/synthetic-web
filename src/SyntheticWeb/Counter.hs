@@ -6,6 +6,7 @@ module SyntheticWeb.Counter
        , CounterPair (..)
        , CounterSet (..)
        , FrozenSet (..)
+       , mkCounterSet
        , mkGlobalCounter
        , mkPatternCounter
        , activatePattern
@@ -14,11 +15,16 @@ module SyntheticWeb.Counter
        , updateSleepTime
        , updateLatencyTime
        , freeze
+       , toThroughput
        , atomically
        ) where
 
 import Control.Concurrent.STM (STM, TVar, atomically, modifyTVar, readTVar)
-import Data.Time (NominalDiffTime)
+import Control.DeepSeq (force)
+import Data.Time ( UTCTime
+                 , NominalDiffTime
+                 , getCurrentTime
+                 , diffUTCTime )
 import SyntheticWeb.Counter.ByteCounter
 import SyntheticWeb.Counter.GlobalCounter
 import SyntheticWeb.Counter.PatternCounter
@@ -29,10 +35,17 @@ import SyntheticWeb.Counter.Throughput
 newtype CounterPair = CounterPair (TVar PatternCounter, TVar GlobalCounter)
 
 -- | A set of the GlobalCounter and all the PatternCounters.
-newtype CounterSet = CounterSet (TVar GlobalCounter, [TVar PatternCounter])
+newtype CounterSet = 
+    CounterSet (UTCTime, TVar GlobalCounter, [TVar PatternCounter])
 
 -- | A frozen set of Global counter and all the PatternCounters.
-newtype FrozenSet = FrozenSet (GlobalCounter, [PatternCounter])
+newtype FrozenSet = FrozenSet (NominalDiffTime, GlobalCounter, [PatternCounter])
+
+-- | Make a time stamped counter set.
+mkCounterSet :: TVar GlobalCounter -> [TVar PatternCounter] -> IO CounterSet
+mkCounterSet g ps = do
+  t <- getCurrentTime'
+  return $ CounterSet (t, g, ps)
 
 -- | Activate a pattern. It will increase the pattern local
 -- activations counter and the global total activations counter.
@@ -70,11 +83,17 @@ updateLatencyTime delta (CounterPair (p, g)) = do
   modifyTVar p $ \p' -> p' { latencyTime = latencyTime p' + delta }
   modifyTVar g $ \g' -> g' { totalLatencyTime = totalLatencyTime g' + delta }
 
--- | Freeze a snapshot of the counters from TVar to pure.
-freeze :: CounterSet -> STM FrozenSet
-freeze (CounterSet (g, ps)) = do
+-- | Freeze a snapshot of the counters from TVar to pure values and
+-- calculate the difftime from the start.
+freeze :: CounterSet -> IO FrozenSet
+freeze (CounterSet (t, g, ps)) = do
+  t' <- getCurrentTime'
+  atomically $ do
     g'  <- readTVar g
     ps' <- mapM readTVar ps
-    return $ FrozenSet (g', ps')
+    return $! FrozenSet (t' `diffUTCTime` t, g', ps')
+
+getCurrentTime' :: IO UTCTime
+getCurrentTime' = force <$> getCurrentTime
 
 
