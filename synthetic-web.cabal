@@ -24,7 +24,11 @@ library
                        SyntheticWeb.Server
                        SyntheticWeb.RandomData
                        SyntheticWeb.Task
-  other-modules:       SyntheticWeb.Client.Executor
+  other-modules:       SyntheticWeb.Client.ByteCountedConnection
+                       SyntheticWeb.Client.ExecM
+                       SyntheticWeb.Client.Executor
+                       SyntheticWeb.Client.Http
+                       SyntheticWeb.Client.SizeUrl
                        SyntheticWeb.Client.TimedAction
                        SyntheticWeb.Counter.ByteCounter
                        SyntheticWeb.Counter.GlobalCounter
@@ -37,8 +41,10 @@ library
                        , async
                        , bytestring
                        , deepseq
+                       , http-streams==0.10.0.0
                        , io-streams
                        , mtl
+                       , network
                        , parsec
                        , random
                        , snap-core
@@ -47,6 +53,7 @@ library
                        , time
                        , transformers
                        , vector
+                       , mwc-random
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:	       -Wall -fno-warn-unused-do-bind
@@ -58,7 +65,10 @@ executable syntheticweb
                        , bytestring
                        , cmdargs
                        , deepseq
+                       , http-streams==0.10.0.0
+                       , io-streams
                        , mtl
+                       , network
                        , parsec
                        , random
                        , snap-core
@@ -68,6 +78,7 @@ executable syntheticweb
                        , transformers
                        , vector
                        , synthetic-web ==0.1.0.0
+                       , mwc-random
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:	       -Wall -O2 -threaded -fno-warn-unused-do-bind
