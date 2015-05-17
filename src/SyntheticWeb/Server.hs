@@ -4,7 +4,6 @@ module SyntheticWeb.Server
        ) where
 
 import Control.Applicative ((<|>))
-import Control.DeepSeq (deepseq)
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.ByteString.Char8 as BS
 import Data.Maybe (fromJust)
@@ -27,31 +26,41 @@ import Snap.Http.Server ( defaultConfig
                         , setCompression )
 import SyntheticWeb.RandomData (randomData)
 
+-- | Initialize the service and route requests.
 service :: Int -> IO ()
 service port = do
   let config =  setPort port $
                 setCompression False defaultConfig
       payload = randomData
-  preheatPayload payload
   httpServe config $ route
-                [ (":resource", method GET $ do
-                     getReplyHandler
-                     generatePayload payload )
-                , (":resource", method PUT putReplyHandler)
+                [ ( ":resource"
+                  , method GET $ do
+                      contentReplyHeader 200
+                      generate payload )
+                , ( ":resource"
+                  , method POST $ do
+                      contentReplyHeader 201
+                      generate payload )
+                , ( ":resource"
+                  , method PUT $ noContentReplyHeader 204 )
                 ] <|> resourceNotFoundHandler
 
-getReplyHandler :: Snap ()
-getReplyHandler = do
-  accept <- getHeader "Accept" <$> getRequest
-  let contentType = 
-          maybe emptyResponse (`setContentType` emptyResponse) accept
-  putResponse $ setResponseCode 200 contentType
+-- | Make a reply header which is using the incoming accept header as
+-- content.
+contentReplyHeader :: Int -> Snap ()
+contentReplyHeader code = do
+  maybeAccept <- getHeader "Accept" <$> getRequest
+  let contentType =
+          maybe emptyResponse (`setContentType` emptyResponse) maybeAccept
+  putResponse $ setResponseCode code contentType
 
-putReplyHandler :: Snap ()
-putReplyHandler = putResponse $ setResponseCode 204 emptyResponse
+-- | Make a reply header for no content, only response code.
+noContentReplyHeader :: Int -> Snap ()
+noContentReplyHeader code = putResponse $ setResponseCode code emptyResponse
 
-generatePayload :: LBS.ByteString -> Snap ()
-generatePayload payload = do
+-- | Generate the amount of payload specified by the url.
+generate :: LBS.ByteString -> Snap ()
+generate payload = do
   reqSize <- read . BS.unpack . fromJust <$> getParam "resource"
   writeLBS $ LBS.take reqSize payload
 
@@ -61,6 +70,3 @@ resourceNotFoundHandler = do
                  setContentType "text/plain" emptyResponse
   putResponse response
   writeBS "The requested resource was not found"
-
-preheatPayload :: LBS.ByteString -> IO ()
-preheatPayload payload = return $ LBS.take 20000000 payload `deepseq` ()

@@ -1,7 +1,10 @@
 module SyntheticWeb.Client.SizeUrl
     ( SizeUrl
+    , Payload
+    , Url
     , fromSize
-    , toBS
+    , toUrl
+    , toPayload
     ) where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -9,9 +12,13 @@ import SyntheticWeb.Plan.Types (Bytes, Size (..))
 import System.Random.MWC (GenIO, uniformR)
 import System.Random.MWC.Distributions (normal)
 import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as LBS
+
+type Url = BS.ByteString
+type Payload = LBS.ByteString
 
 -- | Representation of a "size url". An url where a number - integer
--- based size - shall be translated to an url.
+-- based size - shall be translated to an url or a sized payload.
 newtype SizeUrl = SizeUrl Bytes
   deriving (Show)
 
@@ -23,6 +30,10 @@ fromSize (Gauss (mean, stddev)) gen =
     SizeUrl . truncate <$> 
             liftIO (normal (fromIntegral mean) (fromIntegral stddev) gen)
 
--- | Translate the SizeUrl to a bytestring.
-toBS :: SizeUrl -> BS.ByteString
-toBS (SizeUrl bytes) = '/' `BS.cons` (BS.pack $ show bytes)
+-- | Translate the SizeUrl to an url.
+toUrl :: SizeUrl -> Url
+toUrl (SizeUrl bytes) = '/' `BS.cons` (BS.pack $ show bytes)
+
+-- | Translate the SizeUrl to an equally sized payload.
+toPayload :: SizeUrl -> Payload -> Payload
+toPayload (SizeUrl bytes) = LBS.take (fromIntegral bytes)

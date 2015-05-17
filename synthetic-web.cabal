@@ -39,6 +39,7 @@ library
                        SyntheticWeb.Plan.Writer
   build-depends:       base <5
                        , async
+                       , blaze-builder
                        , bytestring
                        , deepseq
                        , http-streams==0.10.0.0
@@ -62,6 +63,7 @@ executable syntheticweb
   main-is:             Main.hs
   build-depends:       base <5
                        , async
+                       , blaze-builder
                        , bytestring
                        , cmdargs
                        , deepseq
@@ -100,6 +102,7 @@ test-suite syntheticweb-tests
                        , test-framework-hunit
                        , test-framework-quickcheck2
                        , async
+                       , blaze-builder
                        , bytestring
                        , cmdargs
                        , deepseq

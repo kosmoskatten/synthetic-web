@@ -5,8 +5,7 @@ module SyntheticWeb.Client.Executor
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.STM (atomically)
 import Data.Time (NominalDiffTime)
-import SyntheticWeb.Client.Http (get)
-import SyntheticWeb.Client.SizeUrl (fromSize)
+import SyntheticWeb.Client.Http (get, post, put)
 import SyntheticWeb.Client.TimedAction (timedAction)
 import SyntheticWeb.Counter ( ByteCounter
                             , activatePattern
@@ -17,10 +16,8 @@ import SyntheticWeb.Counter ( ByteCounter
 import SyntheticWeb.Client.ExecM ( ExecM
                                  , getCounters
                                  , getActivities
-                                 , getGenerator
                                  , liftIO )
 import SyntheticWeb.Plan.Types ( Activity (..)
-                               , Download (..)
                                , Duration (..) )
 
 -- | Execute one task.
@@ -47,13 +44,19 @@ executeActivity (SLEEP duration) = do
       toDelay (Sec t)  = t * 1000000
 
 -- | Fetch a resource with the specfied size.
-executeActivity (GET headers (Download size) _) = do
-  sizeUrl                      <- fromSize size =<< getGenerator
-  ((_, byteCount), timeItTook) <- timedAction (get sizeUrl headers)
+executeActivity (GET headers download _) = do
+  ((_, byteCount), timeItTook) <- timedAction (get download headers)
   doUpdateByteCountAndLatencyTime byteCount timeItTook
 
-executeActivity (PUT _ _) = return ()
-executeActivity (POST _ _ _ _) = return ()
+-- | Upload to a resource with the specified size.
+executeActivity (PUT headers upload) = do
+  ((_, byteCount), timeItTook) <- timedAction (put upload headers)
+  doUpdateByteCountAndLatencyTime byteCount timeItTook
+
+-- | Perform a post (upload and download) with the specicied sizes.
+executeActivity (POST headers upload download _) = do
+  ((_, byteCount), timeItTook) <- timedAction (post upload download headers)
+  doUpdateByteCountAndLatencyTime byteCount timeItTook
 
 doActivatePattern :: ExecM ()
 doActivatePattern = do

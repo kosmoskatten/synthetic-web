@@ -3,8 +3,10 @@ module TestSuite.Server
     ( getTextPlainSize667
     , getTextHtmlSize5671
     , putTextPlain
+    , postTextHtmlSize1234
     ) where
 
+import Blaze.ByteString.Builder (Builder)
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (async, cancel)
 import Control.Exception (bracket)
@@ -24,11 +26,16 @@ import Network.Http.Client ( Method (..)
                            , sendRequest
                            , withConnection )
 import SyntheticWeb.Server (service)
+import System.IO.Streams (OutputStream)
 import qualified System.IO.Streams as Streams
 import Test.HUnit
 
+type Url    = BS.ByteString
+type Header = (BS.ByteString, BS.ByteString)
+type Reply  = (StatusCode, Int, Maybe BS.ByteString)
+
 -- | HTTP GET /667
--- Accept: text/plain. Shall result in 200 OK and 667 bytes body.
+-- Accept: text/plain. Shall result in 200 and a 667 bytes body.
 getTextPlainSize667 :: Assertion
 getTextPlainSize667 = 
   withServer $ do
@@ -38,7 +45,7 @@ getTextPlainSize667 =
     "text/plain" @=? fromJust contentType
 
 -- | HTTP GET /5671
--- Accept: text/html. Shall result in 200 OK and 5671 bytes body.
+-- Accept: text/html. Shall result in 200 and 5671 bytes body.
 getTextHtmlSize5671 :: Assertion
 getTextHtmlSize5671 =
   withServer $ do
@@ -47,13 +54,28 @@ getTextHtmlSize5671 =
     5671        @=? respSize
     "text/html" @=? fromJust contentType
 
+-- | HTTP PUT /123
+-- Content-Type: text/plain. Shall result in 204 and no body.
 putTextPlain :: Assertion
 putTextPlain =
   withServer $ do
-    (respCode, respSize, contentType) <- "/123" `put` [("Accept", "text/plain")]
+    (respCode, respSize, contentType) <- 
+        "/123" `put` [("Content-Type", "text/plain")]
     204     @=? respCode
     0       @=? respSize
     Nothing @=? contentType
+
+-- | HTTP POST /1234
+-- Accept: text/html, Content-Type: text/html. Shall result in 201 and
+-- a 1234 bytes body.
+postTextHtmlSize1234 :: Assertion
+postTextHtmlSize1234 =
+  withServer $ do
+    (respCode, respSize, contentType) <- 
+        "/1234" `post` [("Accept", "text/html"), ("Content-Type", "text/html")]
+    201         @=? respCode
+    1234        @=? respSize
+    "text/html" @=? fromJust contentType
 
 serviceName :: BS.ByteString
 serviceName = "127.0.0.1"
@@ -68,33 +90,23 @@ withServer act =
             threadDelay 1000000
             act
 
-get :: BS.ByteString 
-      -> [(BS.ByteString, BS.ByteString)] 
-      -> IO (StatusCode, Int, Maybe BS.ByteString)
-get url reqHeaders =
-  withConnection (openConnection serviceName 
-                  (fromIntegral servicePort)) $ \conn -> do
-    let request = 
-            buildRequest $ do
-              http GET url
-              mapM_ (uncurry setHeader) reqHeaders
-    sendRequest conn request emptyBody
-    receiveResponse conn $ \resp inp -> do
-      let respCode = getStatusCode resp
-      respSize <- BS.length <$> concatHandler resp inp
-      return (respCode, respSize, getHeader resp "Content-Type")
+get :: Url -> [Header] -> IO Reply
+get = op GET emptyBody
 
-put :: BS.ByteString
-       -> [(BS.ByteString, BS.ByteString)]
-       -> IO (StatusCode, Int, Maybe BS.ByteString)
-put url reqHeaders =
+put :: Url -> [Header] -> IO Reply
+put = op PUT (Streams.write (Just "Just some bytes"))
+
+post :: Url -> [Header] -> IO Reply
+post = op POST (Streams.write (Just "Just some bytes"))
+
+op :: Method -> (OutputStream Builder -> IO ()) -> Url -> [Header] -> IO Reply
+op method output url headers =
   withConnection (openConnection serviceName
-                  (fromIntegral servicePort)) $ \conn -> do
-    let request = 
-            buildRequest $ do
-              http PUT url
-              mapM_ (uncurry setHeader) reqHeaders
-    sendRequest conn request $ Streams.write (Just "Just some bytes")
+                   (fromIntegral servicePort)) $ \conn -> do
+    let request = buildRequest $ do
+                    http method url
+                    mapM_ (uncurry setHeader) headers
+    sendRequest conn request output
     receiveResponse conn $ \resp inp -> do
       let respCode = getStatusCode resp
       respSize <- BS.length <$> concatHandler resp inp
