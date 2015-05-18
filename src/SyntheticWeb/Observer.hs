@@ -133,8 +133,10 @@ htmlFoot = BS.unlines
   , "</html>"
   ]
 
-percentOf :: Fractional a => a -> a -> a
-percentOf t1 t2 = t1 / t2 * 100
+percentOf :: (Fractional a, Ord a) => a -> a -> a
+percentOf t1 t2 
+    | t2 > 0    = t1 / t2 * 100
+    | otherwise = 0
 
 timeToDouble :: NominalDiffTime -> Double
 timeToDouble = realToFrac

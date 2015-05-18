@@ -24,11 +24,18 @@ newtype SizeUrl = SizeUrl Bytes
 
 -- | Create a SizeUrl from a Size.
 fromSize :: MonadIO m => Size -> GenIO -> m SizeUrl
-fromSize (Exactly bytes) _          = return $ SizeUrl bytes
-fromSize (Uniform range) gen        = SizeUrl <$> liftIO (uniformR range gen)
+fromSize (Exactly bytes) _          = return $ SizeUrl (adjust bytes)
+fromSize (Uniform range) gen        = 
+    SizeUrl . adjust <$> liftIO (uniformR range gen)
 fromSize (Gauss (mean, stddev)) gen = 
-    SizeUrl . truncate <$> 
+    SizeUrl . adjust . truncate <$> 
             liftIO (normal (fromIntegral mean) (fromIntegral stddev) gen)
+
+-- | Adjust a bytes value to always be at least zero.
+adjust :: Bytes -> Bytes
+adjust n
+    | n >= 0    = n
+    | otherwise = 0
 
 -- | Translate the SizeUrl to an url.
 toUrl :: SizeUrl -> Url
