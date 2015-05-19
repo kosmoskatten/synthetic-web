@@ -7,10 +7,10 @@ module SyntheticWeb.Client.SizeUrl
     , toPayload
     ) where
 
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.IO.Class (MonadIO)
 import SyntheticWeb.Plan.Types (Bytes, Size (..))
-import System.Random.MWC (GenIO, uniformR)
-import System.Random.MWC.Distributions (normal)
+import SyntheticWeb.Statistical (Statistical (Exactly), sample)
+import System.Random.MWC (GenIO)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
 
@@ -24,18 +24,9 @@ newtype SizeUrl = SizeUrl Bytes
 
 -- | Create a SizeUrl from a Size.
 fromSize :: MonadIO m => Size -> GenIO -> m SizeUrl
-fromSize (Exactly bytes) _          = return $ SizeUrl (adjust bytes)
-fromSize (Uniform range) gen        = 
-    SizeUrl . adjust <$> liftIO (uniformR range gen)
-fromSize (Gauss (mean, stddev)) gen = 
-    SizeUrl . adjust . truncate <$> 
-            liftIO (normal (fromIntegral mean) (fromIntegral stddev) gen)
-
--- | Adjust a bytes value to always be at least zero.
-adjust :: Bytes -> Bytes
-adjust n
-    | n >= 0    = n
-    | otherwise = 0
+fromSize (Size stat) gen = do
+  Exactly bytes <- sample stat gen
+  return $ SizeUrl bytes
 
 -- | Translate the SizeUrl to an url.
 toUrl :: SizeUrl -> Url

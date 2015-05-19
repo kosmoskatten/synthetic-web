@@ -2,6 +2,8 @@ module Generators.Plan where
 
 import Test.QuickCheck
 import SyntheticWeb.Plan
+import System.Random (Random ())
+import SyntheticWeb.Statistical
 
 instance Arbitrary Plan where
   arbitrary = Plan <$> (resize 20 $ listOf weightPatternPair)
@@ -35,12 +37,15 @@ instance Arbitrary Rate where
                     , LimitedTo <$> arbitrary ]
 
 instance Arbitrary Size where
-  arbitrary = oneof [ Exactly <$> bytes
-                    , Uniform <$> range
-                    , Gauss   <$> range ]
+  arbitrary = Size <$> arbitrary
+
+instance (Num a, Random a) => Arbitrary (Statistical a) where
+  arbitrary = oneof [ Exactly  <$> val
+                    , Uniform  <$> pair
+                    , Gaussian <$> pair ]
     where
-      range :: Gen (Bytes, Bytes)
-      range = (,) <$> bytes <*> bytes
+      pair = (,) <$> val <*> val
+      val  = choose (500, 5000000)
 
 instance Arbitrary Weight where
   arbitrary = Weight <$> choose (1, 10)
@@ -50,9 +55,6 @@ instance Arbitrary Header where
 
 weightPatternPair :: Gen (Weight, Pattern)
 weightPatternPair = (,) <$> arbitrary <*> arbitrary
-
-bytes :: Gen Bytes
-bytes = choose (500, 50000000)
 
 patternName :: Gen String
 patternName = (:) <$> elements initSet <*> contSet 3 25

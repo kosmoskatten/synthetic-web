@@ -16,6 +16,7 @@ module SyntheticWeb.Plan.Types
 
 import Control.DeepSeq
 import GHC.Generics
+import SyntheticWeb.Statistical (Statistical (..))
 
 -- | Tell the number of bytes.
 type Bytes = Int
@@ -80,16 +81,8 @@ data Rate =
     -- ^ Limited to bytes/s.
   deriving (Eq, Generic, NFData, Show)
 
--- | Specification of a requested size measured in bytes. The size
--- could be expressed exactly or as a range specified for a random
--- distribution.
-data Size =
-  Exactly !Bytes
-    -- ^ Exactly the number of bytes.
-  | Uniform !(Bytes, Bytes)
-    -- ^ A number of bytes uniformly distributed over the range.
-  | Gauss !(Bytes, Bytes)
-    -- ^ A numer of bytes normal distributed over the range.
+-- | Specification of a requested size measured in bytes
+data Size = Size (Statistical Bytes)
   deriving (Eq, Generic, NFData, Show)
 
 -- | Header flags that specifies the behavior of the communication

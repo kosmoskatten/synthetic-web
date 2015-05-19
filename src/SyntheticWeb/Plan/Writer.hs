@@ -1,8 +1,9 @@
 {-# LANGUAGE RecordWildCards #-}
 module SyntheticWeb.Plan.Writer (writePlan) where
 
-import Text.Printf (printf)
+import Text.Printf (PrintfArg (), printf)
 import SyntheticWeb.Plan.Types
+import SyntheticWeb.Statistical (Statistical (..))
 
 writePlan :: Plan -> String
 writePlan (Plan plan) = go plan
@@ -47,9 +48,12 @@ writeDuration (Msec duration) = printf "%d msec" duration
 writeDuration (Sec duration)  = printf "%d sec" duration
 
 writeSize :: Size -> String
-writeSize (Exactly bytes) = printf "exactly %d" bytes
-writeSize (Uniform range) = printf "uniform %d-%d" `uncurry` range
-writeSize (Gauss range)   = printf "gauss %d-%d" `uncurry` range
+writeSize (Size stat) = writeStatistical stat
+
+writeStatistical :: PrintfArg a => Statistical a -> String
+writeStatistical (Exactly bytes)  = printf "exactly %d" bytes
+writeStatistical (Uniform range)  = printf "uniform %d-%d" `uncurry` range
+writeStatistical (Gaussian range) = printf "gaussian %d,%d" `uncurry` range
 
 writeDownload :: Download -> String
 writeDownload (Download size) = writeSize size

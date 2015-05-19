@@ -11,7 +11,9 @@ import SyntheticWeb.Plan.Types ( Plan (..)
                                , Upload (..)
                                , Size (..)
                                , Header (..)
+                               , Bytes
                                )
+import SyntheticWeb.Statistical (Statistical (..))
 import Text.Parsec
 import Text.Parsec.String (Parser)
 import Text.Parsec.Language (emptyDef)
@@ -26,7 +28,7 @@ lexer =
   , Token.reservedNames = [ "pattern", "with", "weight", "download"
                           , "upload", "get", "put", "post", "sleep"
                           , "headers" , "rate", "limitedto"
-                          , "unlimited" , "gauss", "uniform", "exactly"
+                          , "unlimited" , "gaussian", "uniform", "exactly"
                           , "accept-any", "accept-text-html"
                           , "accept-text-plain", "accept-application-json"
                           , "content-text-html", "content-text-plain"
@@ -93,18 +95,21 @@ rate = do
       reserved "unlimited"
       return Unlimited
     limitedTo = do
-      reserved "limitedTo"
+      reserved "limitedto"
       LimitedTo <$> size
 
 size :: Parser Size
-size = exactly <|> gauss <|> uniform
+size = Size <$> statistical
+
+statistical :: Num a => Parser (Statistical a)
+statistical = exactly <|> gaussian <|> uniform
   where
     exactly = do
       reserved "exactly"
       Exactly <$> decimal
-    gauss = do
-      reserved "gauss"
-      curry Gauss <$> decimal <*> (char' '-' *> decimal)
+    gaussian = do
+      reserved "gaussian"
+      curry Gaussian <$> decimal <*> (char' ',' *> decimal)
     uniform = do
       reserved "uniform"
       curry Uniform <$> decimal <*> (char' '-' *> decimal)
@@ -145,7 +150,7 @@ commaSep p = lexeme $ Token.commaSep lexer p
 identifier :: Parser String
 identifier = lexeme $ Token.identifier lexer
 
-decimal :: Parser Int
+decimal :: Num a => Parser a
 decimal = fromInteger <$> lexeme (Token.decimal lexer)
 
 reserved :: String -> Parser ()
