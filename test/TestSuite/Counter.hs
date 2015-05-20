@@ -63,13 +63,13 @@ activationCounterPropagation plan@(Plan plan') =
     FrozenSet (_, g, ps) <- run (freeze counters)
     -- Check that the total activations is equal to the number of
     -- tasks.
-    assert $ (fromIntegral $ Vector.length tasks) == totalActivations g
+    assert $ fromIntegral (Vector.length tasks) == totalActivations g
 
     -- Check that the activations for each pattern is equal to the
     -- pattern's weight.
     forM_ plan' $ \(Weight w, p) -> do
       let [patternCounter] = filter (\c -> patternName c == name p) ps
-      assert $ (fromIntegral w) == activations patternCounter      
+      assert $ fromIntegral w == activations patternCounter      
 
 byteCounterPropagation :: Plan -> Property
 byteCounterPropagation plan@(Plan plan') =

@@ -29,15 +29,15 @@ writeActivity :: Activity -> String
 writeActivity (SLEEP duration) = 
   printf " SLEEP %s," (writeDuration duration)
 writeActivity (GET headers download rate) =
-  printf " GET headers %s download %s rate %s," (writeHeaders headers)
+  printf " GET headers %s download %s rate %s," (show headers)
                                                 (writeDownload download)
                                                 (writeRate rate)
 writeActivity (PUT headers upload) =
-  printf " PUT headers %s upload %s," (writeHeaders headers)
+  printf " PUT headers %s upload %s," (show headers)
                                       (writeUpload upload)
 writeActivity (POST headers upload download rate) =
   printf " POST headers %s upload %s download %s rate %s,"
-         (writeHeaders headers)
+         (show headers)
          (writeUpload upload)
          (writeDownload download)
          (writeRate rate)
@@ -65,14 +65,3 @@ writeRate :: Rate -> String
 writeRate Unlimited        = "unlimited"
 writeRate (LimitedTo size) = printf "limitedTo %s" (writeSize size)
 
-writeHeaders :: [Header] -> String
-writeHeaders = filter (/= '\"') . show . map toString
-  where
-    toString :: Header -> String
-    toString AcceptAny              = "accept-any"
-    toString AcceptTextHtml         = "accept-text-html"
-    toString AcceptTextPlain        = "accept-text-plain"
-    toString AcceptApplicationJSON  = "accept-application-json"
-    toString ContentTextHtml        = "content-text-html"
-    toString ContentTextPlain       = "content-text-plain"
-    toString ContentApplicationJSON = "content-application-json"

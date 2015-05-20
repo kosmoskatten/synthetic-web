@@ -28,28 +28,38 @@ testSuite =
     , testProperty "LatencyTimeCounterPropagatino"
                    Counter.latencyTimeCounterPropagation
     ]
+
   , testGroup "Counter unit tests"
     [ testCase "Convert1ByteToThroughput" Counter.convert1ByteToThroughput
     ]
+
   , testGroup "Plan property tests"
     [ testProperty "EncodeDecodePlanIsEqual" Plan.encodeDecodePlanIsEqual
     , testProperty "EncodeDecodePlanIsEqualWhenComments"
                    Plan.encodeDecodePlanIsEqualWhenComments
-    , testProperty "EncodeDecodeHeaderIsEqual" Plan.encodeDecodePlanIsEqual
+    , testProperty "EncodeDecodeHeaderIsEqual" Plan.encodeDecodeHeaderIsEqual
     ]
+
+  , testGroup "Plan unit tests"
+    [ testCase "ShallTranslateToHeaderTuples" Plan.shallTranslateToHeaderTuples
+    ]
+
   , testGroup "Task property tests"
     [ testProperty "VectorLengthIsSumOfWeights" Task.vectorLengthIsSumOfWeights
     , testProperty "NamesShallBeEqual" Task.namesShallBeEqual
     , testProperty "PatternCountersAsManyAsPatterns"
                    Task.patternCountersAsManyAsPatterns
     ]
+
   , testGroup "Host property tests"
     [ testProperty "DecodeEncodeIsEqual" Host.encodeDecodeIsEqual
     ]
+
   , testGroup "Client unit tests"
     [ testCase "TimedActionShallTimeCorrectly" 
                Client.timedActionShallTimeCorrectly
     ]
+
   , testGroup "Server unit tests"
     [ testCase "Get text/plain size 667" Server.getTextPlainSize667
     , testCase "Get text/html size 5671" Server.getTextHtmlSize5671

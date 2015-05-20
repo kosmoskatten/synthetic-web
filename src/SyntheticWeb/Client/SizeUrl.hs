@@ -30,7 +30,7 @@ fromSize (Size stat) gen = do
 
 -- | Translate the SizeUrl to an url.
 toUrl :: SizeUrl -> Url
-toUrl (SizeUrl bytes) = '/' `BS.cons` (BS.pack $ show bytes)
+toUrl (SizeUrl bytes) = '/' `BS.cons` BS.pack (show bytes)
 
 -- | Translate the SizeUrl to an equally sized payload.
 toPayload :: SizeUrl -> Payload -> Payload

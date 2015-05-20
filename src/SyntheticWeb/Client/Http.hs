@@ -14,7 +14,8 @@ import Network.Http.Client ( Method (..)
                            , getStatusCode
                            , inputStreamBody
                            , receiveResponse
-                           , sendRequest )
+                           , sendRequest
+                           , setHeader )
 import SyntheticWeb.Client.ByteCountedConnection ( openByteCountedConnection
                                                  , withByteCountedConnection )
 import SyntheticWeb.Client.ExecM ( ExecM
@@ -25,7 +26,7 @@ import SyntheticWeb.Client.ExecM ( ExecM
 import SyntheticWeb.Client.SizeUrl (SizeUrl, fromSize, toPayload, toUrl)
 import SyntheticWeb.Counter.ByteCounter (ByteCounter)
 import SyntheticWeb.Host (Host (..))
-import SyntheticWeb.Plan.Types (Header, Download (..), Upload (..))
+import SyntheticWeb.Plan (Header, Download (..), Upload (..), toTuple)
 import System.IO.Streams (OutputStream)
 import qualified System.IO.Streams as Streams
 
@@ -60,6 +61,7 @@ op method url output headers = do
       (openByteCountedConnection (hostname host) (port host)) $ \conn -> do
          let request = buildRequest $ do
                          http method (toUrl url)
+                         mapM_ (uncurry setHeader . toTuple) headers
          sendRequest conn request output
          receiveResponse conn $ \resp inp -> do
            Streams.skipToEof inp

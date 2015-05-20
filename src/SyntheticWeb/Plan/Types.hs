@@ -11,11 +11,11 @@ module SyntheticWeb.Plan.Types
        , Download (..)
        , Upload (..)
        , Size (..)
-       , Header (..)
        ) where
 
 import Control.DeepSeq
 import GHC.Generics
+import SyntheticWeb.Plan.Header (Header)
 import SyntheticWeb.Statistical (Statistical (..))
 
 -- | Tell the number of bytes.
@@ -84,23 +84,4 @@ data Rate =
 -- | Specification of a requested size measured in bytes
 data Size = Size !(Statistical Bytes)
   deriving (Eq, Generic, NFData, Show)
-
--- | Header flags that specifies the behavior of the communication
--- between client and server.t
-data Header =
-  AcceptAny
-    -- ^ The client accepts contents of any type in the response.
-  | AcceptTextHtml
-    -- ^ The client accepts text/html as content in the response.
-  | AcceptTextPlain
-    -- ^ The client accepts text/plain as content in the response.
-  | AcceptApplicationJSON
-    -- ^ The client accepts application/json as content in the response.
-  | ContentTextHtml
-    -- ^ The content in the upstream request is text/html.
-  | ContentTextPlain
-    -- ^ The content in the upstream request is text/plain.
-  | ContentApplicationJSON
-    -- ^ The content in the upstream request is application/json.
-  deriving (Bounded, Enum, Eq, Generic, NFData, Show)
 

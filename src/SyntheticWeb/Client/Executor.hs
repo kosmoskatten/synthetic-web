@@ -22,8 +22,6 @@ import SyntheticWeb.Plan.Types ( Activity (..)
                                , Duration (..) )
 import SyntheticWeb.Statistical (Statistical (Exactly), sample)
 
-import Text.Printf (printf)
-
 -- | Execute one task.
 executeTask :: ExecM ()
 executeTask = do
@@ -40,7 +38,6 @@ executeActivity :: Activity -> ExecM ()
 -- | Delay the task worker thread for the specified duration.
 executeActivity (SLEEP duration) = do
   delay <- sampleDelayTime duration
-  liftIO $ printf "--- Sleep for %d sec" delay
   ((), timeItTook) <- timedAction $ liftIO (threadDelay delay)
   doUpdateSleepTime timeItTook
 

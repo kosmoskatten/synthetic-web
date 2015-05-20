@@ -31,7 +31,7 @@ getHost = do
   hostname' <- getHostname
   skipSpaces ; char ':'
   port'     <- getPort
-  return $ Host { hostname = BS.pack hostname', port = port' }
+  return Host { hostname = BS.pack hostname', port = port' }
 
 getHostname :: ReadP String
 getHostname = do

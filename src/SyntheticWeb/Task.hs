@@ -39,7 +39,7 @@ mkTaskSet plan = do
   taskList        <- mkTaskList globalCounter plan
   patternCounters <- uniquePatternCounters taskList
   counterSet      <- mkCounterSet globalCounter patternCounters
-  return $! (counterSet, fromList taskList)
+  return (counterSet, fromList taskList)
 
 mkTaskList :: TVar GlobalCounter -> Plan -> IO [Task]
 mkTaskList global (Plan plan) = concat <$> mapM go plan

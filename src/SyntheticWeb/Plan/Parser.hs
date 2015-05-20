@@ -1,6 +1,7 @@
 module SyntheticWeb.Plan.Parser (parsePlan) where
 
 import Control.Monad (void)
+import SyntheticWeb.Plan.Header (Header (..))
 import SyntheticWeb.Plan.Types ( Plan (..)
                                , Weight (..)
                                , Rate (..)
@@ -10,7 +11,6 @@ import SyntheticWeb.Plan.Types ( Plan (..)
                                , Download (..)
                                , Upload (..)
                                , Size (..)
-                               , Header (..)
                                )
 import SyntheticWeb.Statistical (Statistical (..))
 import Text.Parsec
@@ -28,11 +28,16 @@ lexer =
                           , "upload", "get", "put", "post", "sleep"
                           , "headers" , "rate", "limitedto"
                           , "unlimited" , "gaussian", "uniform", "exactly"
-                          , "accept-any", "accept-text-html"
-                          , "accept-text-plain", "accept-application-json"
-                          , "content-text-html", "content-text-plain"
-                          , "content-application-json"
-                          , "usec", "msec", "sec", "bytes" ]
+                          , "usec", "msec", "sec", "bytes"
+                          , "accept-text/html", "accept-text/plain"
+                          , "accept-application/json", "accept-application/xml"
+                          , "accept-image/jpeg", "accept-video/mpeg"
+                          , "accept-audio/mpeg"
+                          , "content-text/html", "content-text/plain"
+                          , "content-application/json"
+                          , "content-application/xml", "content-image/jpeg"
+                          , "content-video/mpeg", "content-audio/mpeg"
+                          ]
   , Token.caseSensitive = False
   }
 
@@ -49,7 +54,7 @@ pattern = do
   name'        <- identifier
   weight       <- withWeight
   activities'' <- activities'
-  return $! (weight, Pattern name' activities'')
+  return (weight, Pattern name' activities'')
 
 withWeight :: Parser Weight
 withWeight = do
@@ -120,13 +125,21 @@ headers = do
   brackets $ commaSep header
 
 header :: Parser Header
-header = reserved "accept-any" *> pure AcceptAny
-         <|> reserved "accept-text-html" *> pure AcceptTextHtml
-         <|> reserved "accept-text-plain" *> pure AcceptTextPlain
-         <|> reserved "accept-application-json" *> pure AcceptApplicationJSON
-         <|> reserved "content-text-html" *> pure ContentTextHtml
-         <|> reserved "content-text-plain" *> pure ContentTextPlain
-         <|> reserved "content-application-json" *> pure ContentApplicationJSON
+header = 
+      reserved "accept-text/html" *> pure AcceptTextHtml
+  <|> reserved "accept-text/plain" *> pure AcceptTextPlain
+  <|> reserved "accept-application/json" *> pure AcceptApplicationJson
+  <|> reserved "accept-application/xml" *> pure AcceptApplicationXml
+  <|> reserved "accept-image/jpeg" *> pure AcceptImageJpeg
+  <|> reserved "accept-video/mpeg" *> pure AcceptVideoMpeg
+  <|> reserved "accept-audio/mpeg" *> pure AcceptAudioMpeg
+  <|> reserved "content-text/html" *> pure ContentTextHtml
+  <|> reserved "content-text/plain" *> pure ContentTextPlain
+  <|> reserved "content-application/json" *> pure ContentApplicationJson
+  <|> reserved "content-application/xml" *> pure ContentApplicationXml
+  <|> reserved "content-image/jpeg" *> pure ContentImageJpeg
+  <|> reserved "content-video/mpeg" *> pure ContentVideoMpeg
+  <|> reserved "content-audio/mpeg" *> pure ContentAudioMpeg
 
 duration :: Parser Duration
 duration = do

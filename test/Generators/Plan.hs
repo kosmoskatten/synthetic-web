@@ -6,10 +6,10 @@ import System.Random (Random ())
 import SyntheticWeb.Statistical
 
 instance Arbitrary Plan where
-  arbitrary = Plan <$> (resize 20 $ listOf weightPatternPair)
+  arbitrary = Plan <$> resize 20 (listOf weightPatternPair)
 
 instance Arbitrary Pattern where
-  arbitrary = Pattern <$> patternName <*> (resize 20 $ listOf1 spec)
+  arbitrary = Pattern <$> patternName <*> resize 20 (listOf1 spec)
     where
       spec :: Gen Activity
       spec = arbitrary

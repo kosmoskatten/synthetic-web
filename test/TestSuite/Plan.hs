@@ -4,14 +4,15 @@ module TestSuite.Plan
        ( encodeDecodePlanIsEqual
        , encodeDecodePlanIsEqualWhenComments
        , encodeDecodeHeaderIsEqual
+       , shallTranslateToHeaderTuples
        ) where
 
 import Control.Monad (replicateM)
 import Generators.Plan ()
+import Test.HUnit
 import Test.QuickCheck
 import Text.Parsec (parse)
 import SyntheticWeb.Plan
-import SyntheticWeb.Plan.Header (HeaderM (..))
 
 data CommentedPlan = CommentedPlan Plan String
   deriving (Eq, Show)
@@ -21,10 +22,7 @@ instance Arbitrary CommentedPlan where
     plan <- arbitrary
     let encodedPlan = lines $ writePlan plan
     encodedPlan' <- unlines . concat <$> mapM commentLine encodedPlan
-    return $ CommentedPlan plan (encodedPlan')
-
-instance Arbitrary HeaderM where
-  arbitrary = elements [minBound..maxBound]
+    return $ CommentedPlan plan encodedPlan'
 
 commentLine :: String -> Gen [String]
 commentLine str = do
@@ -52,5 +50,24 @@ encodeDecodePlanIsEqualWhenComments (CommentedPlan plan encodedPlan) =
 
 -- | Test that read and show convert correctly between type and string
 -- representions.
-encodeDecodeHeaderIsEqual :: HeaderM -> Bool
+encodeDecodeHeaderIsEqual :: Header -> Bool
 encodeDecodeHeaderIsEqual header = header == (read . show) header
+
+-- | Check that header tags are translated to tuples.
+shallTranslateToHeaderTuples :: Assertion
+shallTranslateToHeaderTuples = do
+  ("Accept", "text/html")        @=? toTuple AcceptTextHtml
+  ("Accept", "text/plain")       @=? toTuple AcceptTextPlain
+  ("Accept", "application/json") @=? toTuple AcceptApplicationJson
+  ("Accept", "application/xml")  @=? toTuple AcceptApplicationXml
+  ("Accept", "image/jpeg")       @=? toTuple AcceptImageJpeg
+  ("Accept", "video/mpeg")       @=? toTuple AcceptVideoMpeg
+  ("Accept", "audio/mpeg")       @=? toTuple AcceptAudioMpeg
+
+  ("Content-Type", "text/html")        @=? toTuple ContentTextHtml
+  ("Content-Type", "text/plain")       @=? toTuple ContentTextPlain
+  ("Content-Type", "application/json") @=? toTuple ContentApplicationJson
+  ("Content-Type", "application/xml")  @=? toTuple ContentApplicationXml
+  ("Content-Type", "image/jpeg")       @=? toTuple ContentImageJpeg
+  ("Content-Type", "video/mpeg")       @=? toTuple ContentVideoMpeg
+  ("Content-Type", "audio/mpeg")       @=? toTuple ContentAudioMpeg

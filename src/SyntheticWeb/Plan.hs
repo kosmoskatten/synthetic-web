@@ -14,8 +14,10 @@ module SyntheticWeb.Plan
        , Header (..)
        , parsePlan
        , writePlan
+       , toTuple
        ) where
 
+import SyntheticWeb.Plan.Header
 import SyntheticWeb.Plan.Parser
 import SyntheticWeb.Plan.Types
 import SyntheticWeb.Plan.Writer

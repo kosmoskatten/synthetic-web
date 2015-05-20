@@ -16,7 +16,7 @@ hostname' = BS.pack <$> go
       go :: Gen String
       go =          
           let initCharSet = ['a'..'z'] ++ ['A'..'Z']
-              contCharSet = initCharSet ++ ['0'..'9'] ++ ['-', '.']
+              contCharSet = initCharSet ++ ['0'..'9'] ++ "-."
           in (:) <$> elements initCharSet <*> listOf (elements contCharSet)
 
 port' :: Gen Word16

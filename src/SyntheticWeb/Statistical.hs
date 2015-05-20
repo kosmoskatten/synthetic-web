@@ -39,5 +39,5 @@ sample (Exactly x) _                 = Exactly . atlz <$> pure x
 atlz :: (Num a, Ord a) => a -> a
 atlz x
     | signum x > 0 = x
-    | otherwise    = x + (abs x)
+    | otherwise    = x + abs x
 
