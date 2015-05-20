@@ -34,6 +34,7 @@ library
                        SyntheticWeb.Counter.GlobalCounter
                        SyntheticWeb.Counter.PatternCounter
                        SyntheticWeb.Counter.Throughput
+                       SyntheticWeb.Plan.Header
                        SyntheticWeb.Plan.Parser
                        SyntheticWeb.Plan.Types
                        SyntheticWeb.Plan.Writer

@@ -32,9 +32,10 @@ testSuite =
     [ testCase "Convert1ByteToThroughput" Counter.convert1ByteToThroughput
     ]
   , testGroup "Plan property tests"
-    [ testProperty "EncodeDecodeIsEqual" Plan.encodeDecodeIsEqual
-    , testProperty "EncodeDecodeIsEqualWhenComments"
-                   Plan.encodeDecodeIsEqualWhenComments
+    [ testProperty "EncodeDecodePlanIsEqual" Plan.encodeDecodePlanIsEqual
+    , testProperty "EncodeDecodePlanIsEqualWhenComments"
+                   Plan.encodeDecodePlanIsEqualWhenComments
+    , testProperty "EncodeDecodeHeaderIsEqual" Plan.encodeDecodePlanIsEqual
     ]
   , testGroup "Task property tests"
     [ testProperty "VectorLengthIsSumOfWeights" Task.vectorLengthIsSumOfWeights

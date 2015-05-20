@@ -57,11 +57,11 @@ data Activity =
 
 -- | Specification of a duration.
 data Duration =
-  Usec !Int
+  Usec !(Statistical Int)
     -- ^ Duration in microseconds.
-  | Msec !Int
+  | Msec !(Statistical Int)
     -- ^ Duration in milliseconds.
-  | Sec !Int
+  | Sec !(Statistical Int)
     -- ^ Duration in seconds.
   deriving (Eq, Generic, NFData, Show)
 
@@ -82,11 +82,11 @@ data Rate =
   deriving (Eq, Generic, NFData, Show)
 
 -- | Specification of a requested size measured in bytes
-data Size = Size (Statistical Bytes)
+data Size = Size !(Statistical Bytes)
   deriving (Eq, Generic, NFData, Show)
 
 -- | Header flags that specifies the behavior of the communication
--- between client and server.
+-- between client and server.t
 data Header =
   AcceptAny
     -- ^ The client accepts contents of any type in the response.

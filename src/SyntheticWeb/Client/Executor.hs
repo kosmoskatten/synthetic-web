@@ -16,9 +16,13 @@ import SyntheticWeb.Counter ( ByteCounter
 import SyntheticWeb.Client.ExecM ( ExecM
                                  , getCounters
                                  , getActivities
+                                 , getGenerator
                                  , liftIO )
 import SyntheticWeb.Plan.Types ( Activity (..)
                                , Duration (..) )
+import SyntheticWeb.Statistical (Statistical (Exactly), sample)
+
+import Text.Printf (printf)
 
 -- | Execute one task.
 executeTask :: ExecM ()
@@ -35,13 +39,10 @@ executeActivity :: Activity -> ExecM ()
 
 -- | Delay the task worker thread for the specified duration.
 executeActivity (SLEEP duration) = do
-  ((), timeItTook) <- timedAction $ liftIO (threadDelay $ toDelay duration)
+  delay <- sampleDelayTime duration
+  liftIO $ printf "--- Sleep for %d sec" delay
+  ((), timeItTook) <- timedAction $ liftIO (threadDelay delay)
   doUpdateSleepTime timeItTook
-    where
-      toDelay :: Duration -> Int
-      toDelay (Usec t) = t
-      toDelay (Msec t) = t * 1000
-      toDelay (Sec t)  = t * 1000000
 
 -- | Fetch a resource with the specfied size.
 executeActivity (GET headers download _) = do
@@ -57,6 +58,17 @@ executeActivity (PUT headers upload) = do
 executeActivity (POST headers upload download _) = do
   ((_, byteCount), timeItTook) <- timedAction (post upload download headers)
   doUpdateByteCountAndLatencyTime byteCount timeItTook
+
+sampleDelayTime :: Duration -> ExecM Int
+sampleDelayTime (Usec stat) = do
+  Exactly t <- sample stat =<< getGenerator
+  return t
+sampleDelayTime (Msec stat) = do
+  Exactly t <- sample stat =<< getGenerator
+  return (t * 1000)
+sampleDelayTime (Sec stat) = do
+  Exactly t <- sample stat =<< getGenerator
+  return (t * 1000000)
 
 doActivatePattern :: ExecM ()
 doActivatePattern = do

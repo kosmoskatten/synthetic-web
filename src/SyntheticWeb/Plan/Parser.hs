@@ -11,7 +11,6 @@ import SyntheticWeb.Plan.Types ( Plan (..)
                                , Upload (..)
                                , Size (..)
                                , Header (..)
-                               , Bytes
                                )
 import SyntheticWeb.Statistical (Statistical (..))
 import Text.Parsec
@@ -32,7 +31,8 @@ lexer =
                           , "accept-any", "accept-text-html"
                           , "accept-text-plain", "accept-application-json"
                           , "content-text-html", "content-text-plain"
-                          , "content-application-json", "usec", "msec", "sec" ]
+                          , "content-application-json"
+                          , "usec", "msec", "sec", "bytes" ]
   , Token.caseSensitive = False
   }
 
@@ -99,7 +99,7 @@ rate = do
       LimitedTo <$> size
 
 size :: Parser Size
-size = Size <$> statistical
+size = Size <$> (statistical <* reserved "bytes")
 
 statistical :: Num a => Parser (Statistical a)
 statistical = exactly <|> gaussian <|> uniform
@@ -130,9 +130,9 @@ header = reserved "accept-any" *> pure AcceptAny
 
 duration :: Parser Duration
 duration = do
-  t <- decimal
+  t <- statistical
   u <- unit
-  return $! u t
+  return $ u t
   where
     unit = (reserved "usec" >> pure Usec)
            <|> (reserved "msec" >> pure Msec)

@@ -43,12 +43,12 @@ writeActivity (POST headers upload download rate) =
          (writeRate rate)
 
 writeDuration :: Duration -> String
-writeDuration (Usec duration) = printf "%d usec" duration
-writeDuration (Msec duration) = printf "%d msec" duration
-writeDuration (Sec duration)  = printf "%d sec" duration
+writeDuration (Usec stat) = printf "%s usec" (writeStatistical stat)
+writeDuration (Msec stat) = printf "%s msec" (writeStatistical stat)
+writeDuration (Sec stat)  = printf "%s sec" (writeStatistical stat)
 
 writeSize :: Size -> String
-writeSize (Size stat) = writeStatistical stat
+writeSize (Size stat) = printf "%s bytes" (writeStatistical stat)
 
 writeStatistical :: PrintfArg a => Statistical a -> String
 writeStatistical (Exactly bytes)  = printf "exactly %d" bytes

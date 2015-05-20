@@ -22,9 +22,9 @@ instance Arbitrary Activity where
                              <*> arbitrary <*> arbitrary ]
 
 instance Arbitrary Duration where
-  arbitrary = oneof [ Usec <$> choose (1, 1000)
-                    , Msec <$> choose (1, 1000)
-                    , Sec  <$> choose (1, 1000) ]
+  arbitrary = oneof [ Usec <$> arbitrary
+                    , Msec <$> arbitrary
+                    , Sec  <$> arbitrary ]
 
 instance Arbitrary Download where
   arbitrary = Download <$> arbitrary
@@ -45,7 +45,7 @@ instance (Num a, Random a) => Arbitrary (Statistical a) where
                     , Gaussian <$> pair ]
     where
       pair = (,) <$> val <*> val
-      val  = choose (500, 5000000)
+      val  = choose (1, 5000000)
 
 instance Arbitrary Weight where
   arbitrary = Weight <$> choose (1, 10)
